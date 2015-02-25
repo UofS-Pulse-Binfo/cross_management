@@ -1,0 +1,10 @@
+package = Tripal Extensions
+name = Cross Management
+version = 7.x-2.x-1.0
+description = Provides specificalized forms for managing breeding programs
+core = 7.x
+
+dependencies[] = tripal_stock
+dependencies[] = tripal_core
+dependencies[] = tripal_organism
+dependencies[] = views

@@ -1,0 +1,268 @@
+<?php
+/**
+ * @file
+ *
+ */
+
+include_once('theme/cross_manage.theme.inc');
+
+/**
+ * Implements hook_menu().
+ */
+function cross_manage_menu() {
+  $items = array();
+
+  $items['crossing-block'] = array(
+    'title' => 'Crossing Block Management',
+    'description' => 'Manage your Breeding Program.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cross_manage_set_crossing_block_form'),
+    'access arguments' => array('administer tripal'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['crossing-block/%/%/%/summary'] = array(
+    'title' => 'Crossing Block Management',
+    'description' => 'Manage your Breeding Program.',
+    'page callback' => 'cross_manage_workflow_page',
+    'page arguments' => array(FALSE, 1, 2, 3),
+    'access arguments' => array('administer tripal'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  // Planning Stages
+  $items['crossing-block/%/%/%/set-crosses'] = array(
+    'title' => 'Plan Crosses',
+    'description' => 'A form to set the crosses to be made for a given crossing block.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cross_manage_crossingblock_set_cross_parents_form',1,2,3),
+    'access arguments' => array('administer tripal'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['crossing-block/%/%/%/set-crosses/parents'] = array(
+    'title' => 'Parents',
+    'description' => 'A form to set the crosses to be made for a given crossing block.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cross_manage_crossingblock_set_cross_parents_form',1,2,3),
+    'file' => 'includes/step1_forms.inc',
+    'access arguments' => array('administer tripal'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10
+  );
+
+  $items['crossing-block/%/%/%/set-crosses/F1s'] = array(
+    'title' => 'F1\'s',
+    'description' => 'A form to set the crosses to be made for a given crossing block.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cross_manage_crossingblock_set_cross_f1s_form',1,2,3),
+    'file' => 'includes/step1_forms.inc',
+    'access arguments' => array('administer tripal'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -8
+  );
+
+  $items['crossing-block/%/%/%/set-crosses/marker-data'] = array(
+    'title' => 'Marker Data',
+    'description' => 'A form to set the crosses to be made for a given crossing block.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cross_manage_crossingblock_set_marker_data_form',1,2,3),
+    'file' => 'includes/step2_forms.inc',
+    'access arguments' => array('administer tripal'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => -6
+  );
+
+  // Report Data
+  $items['crossing-block/%/%/%/report-crosses'] = array(
+    'title' => 'Report Cross Outcome',
+    'description' => 'A form to set the crosses to be made for a given crossing block.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cross_manage_crossingblock_assign_cross_num_form',1,2,3),
+    'file' => 'includes/step4_forms.inc',
+    'access arguments' => array('administer tripal'),
+    'type' => MENU_CALLBACK,
+    'weight' => -6
+  );
+
+  return $items;
+}
+
+
+/**
+ * Implements hook_theme().
+ */
+function cross_manage_theme($existing, $type, $theme, $path) {
+  $items = array();
+
+  $items['cross_manage_workflow'] = array(
+    'template' => 'cross_manage_workflow',
+    'path' => "$path/theme/templates",
+  );
+
+  $items['cross_manage_crossingblock_parents'] = array(
+    'render element' => 'element',
+    'function' => 'theme_cross_manage_crossingblock_parents'
+  );
+
+  $items['cross_manage_crossingblock_f1'] = array(
+    'render element' => 'element',
+    'function' => 'theme_cross_manage_crossingblock_f1'
+  );
+
+  $items['cross_manage_crossingblock_marker_entry'] = array(
+    'render element' => 'element',
+    'function' => 'theme_cross_manage_crossingblock_marker_entry'
+  );
+
+  return $items;
+}
+
+/**
+ * @file
+ * Forms for managing a breeding program.
+ */
+
+/**
+ * Workflow page.
+ */
+function cross_manage_workflow_page($is_launchpad = FALSE, $cb_species = NULL, $cb_year = NULL, $cb_season = NULL) {
+
+  return theme(
+    'cross_manage_workflow',
+    array(
+      'is_launchpad' => $is_launchpad,
+      'crossingblock_species' => $cb_species,
+      'crossingblock_year' => $cb_year,
+      'crossingblock_season' => $cb_season
+    )
+  );
+}
+
+/**
+ * Alter Crossing Block form pages to remove the sidebars for more focussed data entry
+ */
+function cross_manage_page_alter(&$page) {
+
+  // If this page is:
+  //   1) The path is crossing-block/*
+  //   2) It's a form
+  if (preg_match('%crossing-block/%',current_path())) {
+    if (isset($page['content']['system_main']['#form_id'])) {
+      unset($page['sidebar_second']);
+    }
+  }
+}
+
+/**
+ * Set the crossing block
+ *
+ * This form sets the crossing block and then re-directs to the specified
+ * crossing block management form
+ *
+ * Found in $form_state['build_info']['args']:
+ * @param 0
+ *   The path of the form to redirect to
+ */
+function cross_manage_set_crossing_block_form($form, $form_state) {
+
+  $form['#attached']['js'] = array(
+    drupal_get_path('module', 'cross_manage') . '/theme/js/workflow_diagram.js',
+    'http://d3js.org/d3.v3.min.js'
+  );
+
+  $form['#attached']['css'][] = array(
+    'type' => 'inline',
+    'data' => '
+      #crossmanage-crossing-block-diagram {
+        float: left;
+        width: 500px;
+        margin-right: 50px;
+        margin-top: -30px;
+        margin-bottom: 25px;
+      }
+      #crossmanage-crossing-block-form.full fieldset{
+        margin-top: 50px;
+      }
+    '
+  );
+
+  $form['diagram'] = array(
+    '#type' => 'markup',
+    '#markup' => '<div id="crossmanage-crossing-block-diagram" class="full">
+  <div id="crossmanage-intro-stages-diagram"></div>
+  <strong>Figure: Representation of the steps involved in managing a crossing block.</strong>
+</div>'
+  );
+
+  $form['form'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Select Crossing Block',
+    '#description' => 'Please select the date and crop of the crossing block you are interested in.',
+    '#prefix' => '<div id="crossmanage-crossing-block-form" class="full">',
+    '#suffix' => '</div>'
+  );
+
+  // @TODO: Add administrative form allowing selection of crops to show here.
+  $crops = array(
+    'Cicer' => 'Chickpea',
+    'Phaseolus' => 'Common Bean',
+    'Lens' => 'Lentil',
+    'Pisum' => 'Field Pea'
+  );
+  $form['form']['crop'] = array(
+    '#type' => 'select',
+    '#title' => 'Crop',
+    '#options' => $crops,
+    '#description' => 'The species of the germplasm you are crossing.'
+  );
+
+  // @TODO: allow admin to set first year of breeding program.
+  $program_start_year = 2000;
+  $years = range($program_start_year, date('Y')+2);
+  $years = array_combine($years, $years);
+  $form['form']['year'] = array(
+    '#type' => 'select',
+    '#title' => 'Year',
+    '#options' => $years,
+    '#default_value' => date('Y'),
+    '#description' => 'The year the crosses were or are to be made in.'
+  );
+
+  $seasons = array('Spring', 'Summer', 'Fall', 'Winter');
+  $seasons = array_combine($seasons, $seasons);
+  $form['form']['season'] = array(
+    '#type' => 'select',
+    '#title' => 'Season',
+    '#options' => $seasons,
+    '#description' => 'The season the crosses were made in.'
+  );
+
+  $form['form']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Crossing Block Summary',
+  );
+
+  return $form;
+}
+
+/**
+ * Submit for cross_manage_crossingblock_set_crossing_block_form()
+ */
+function cross_manage_set_crossing_block_form_submit($form, &$form_state) {
+
+    $species = str_replace(' ','-',$form_state['values']['crop']);
+    $year = $form_state['values']['year'];
+    $season = $form_state['values']['season'];
+
+    $form_state['rebuild'] = FALSE;
+    $form_state['redirect'] = format_string(
+      'crossing-block/@species/@year/@season/summary',
+      array(
+        '@species' => str_replace(' ','-',$form_state['values']['crop']),
+        '@year' => $form_state['values']['year'],
+        '@season' => $form_state['values']['season'],
+      )
+    );
+
+}
