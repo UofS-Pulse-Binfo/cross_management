@@ -22,31 +22,29 @@ function cross_manage_preprocess_cross_manage_workflow(&$vars) {
   }
 
   // Paths to the various forms to be linked to from the workflow.
-  $vars['form_paths']['parents'] = 'set-crosses/parents';
-  $vars['form_paths']['F1'] = 'set-crosses/F1s';
-  $vars['form_paths']['marker'] = 'set-crosses/marker-data';
-  $vars['form_paths']['progeny'] = 'report-crosses';
+  $vars['form_paths']['parents'] = 'crossing-block/@species/@year/@season/set-crosses/parents';
+  $vars['form_paths']['F1'] = 'crossing-block/@species/@year/@season/set-crosses/F1s';
+  $vars['form_paths']['marker'] = 'crossing-block/@species/@year/@season/set-crosses/marker-data';
+  $vars['form_paths']['progeny'] = 'crossing-block/@species/@year/@season/report-crosses';
+  // Replace placeholders in paths.
+  foreach($vars['form_paths'] as $k => $path_string) {
+    $vars['form_paths'][$k] = format_string($path_string, array(
+      '@species' => $vars['crossingblock_species'],
+      '@year' => $vars['crossingblock_year'],
+      '@season' => $vars['crossingblock_season'],
+    ));
+  }
 
   // Set the steps based on where we are in the workflow.
-  if ($vars['is_launchpad']) {
+  // @TODO: Make dynamic.
+  $vars['form_steps']['step1']['complete'] = TRUE;
+  $vars['form_steps']['step2']['complete'] = TRUE;
+  $vars['form_steps']['step3']['complete'] = TRUE;
+  $vars['form_steps']['step4']['complete'] = FALSE;
+  $vars['form_steps']['step5']['complete'] = FALSE;
 
-    $vars['form_steps']['step1']['complete'] = FALSE;
-    $vars['form_steps']['step2']['complete'] = FALSE;
-    $vars['form_steps']['step3']['complete'] = FALSE;
-    $vars['form_steps']['step4']['complete'] = FALSE;
+  $vars['form_steps']['active_panel'] = 0;
 
-    $vars['form_steps']['active_panel'] = 0;
-  }
-  else {
-
-    // @TODO: Dynamically determine the current step.
-    $vars['form_steps']['step1']['complete'] = TRUE;
-    $vars['form_steps']['step2']['complete'] = TRUE;
-    $vars['form_steps']['step3']['complete'] = FALSE;
-    $vars['form_steps']['step4']['complete'] = FALSE;
-
-    $vars['form_steps']['active_panel'] = 2;
-  }
 }
 
 /**
@@ -59,7 +57,8 @@ function theme_cross_manage_crossingblock_parents($vars) {
     'pnum' => array('data' => 'Parent Number', 'class' => 'pnum'),
     'line' => array('data' => 'Line', 'class' => 'line'),
     'source' => array('data' => 'Source', 'class' => 'source'),
-    'marker_data' => array('data' => 'Markers', 'class' => 'marker_data'),
+    // @TODO: Include marker data/selection
+    //'marker_data' => array('data' => 'Markers', 'class' => 'marker_data'),
     'notes' => array('data' => 'Notes', 'class' => 'notes'),
     'cross_to' => array('data' => 'Cross To', 'class' => 'cross_to'),
   );
@@ -103,7 +102,13 @@ function theme_cross_manage_crossingblock_f1($vars) {
     'cross_num' => array('data' => 'Cross Number', 'class' => 'cross_num'),
     'type' => array('data' => 'Type', 'class' => 'type'),
     'pedigree' => array('data' => 'Pedigree', 'class' => 'pedigree'),
-    'marker_data' => array('data' => 'Markers', 'class' => 'markers'),
+    'seed_num' => array('data' => 'Seed Count', 'class' => 'seed_num'),
+    'seed_allocate' => array('data' => 'Seed Allocation', 'class' => 'seed_allocate'),
+    //'seed2cross' => array('data' => 'Seed to Cross', 'class' => 'seed2cross'),
+    //'seed2reserve' => array('data' => 'Seed to Reserve', 'class' => 'seed2reserve'),
+    //'seed2growout' => array('data' => 'Seed to Grow-out', 'class' => 'seed2growout'),
+    // @TODO: Include marker data/selection
+    //'marker_data' => array('data' => 'Markers', 'class' => 'markers'),
     'notes' => array('data' => 'Notes', 'class' => 'notes'),
     'cross_to' => array('data' => 'Cross To', 'class' => 'cross_to'),
   );

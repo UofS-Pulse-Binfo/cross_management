@@ -36,6 +36,7 @@ function cross_manage_menu() {
     'description' => 'A form to set the crosses to be made for a given crossing block.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('cross_manage_crossingblock_set_cross_parents_form',1,2,3),
+    'file' => 'includes/step1_forms.inc',
     'access arguments' => array('administer tripal'),
     'type' => MENU_NORMAL_ITEM,
   );
@@ -62,6 +63,7 @@ function cross_manage_menu() {
     'weight' => -8
   );
 
+/**
   $items['crossing-block/%/%/%/set-crosses/marker-data'] = array(
     'title' => 'Marker Data',
     'description' => 'A form to set the crosses to be made for a given crossing block.',
@@ -72,6 +74,7 @@ function cross_manage_menu() {
     'type' => MENU_LOCAL_TASK,
     'weight' => -6
   );
+*/
 
   // Report Data
   $items['crossing-block/%/%/%/report-crosses'] = array(

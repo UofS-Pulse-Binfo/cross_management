@@ -10,7 +10,7 @@
  *
  * Implements hook_form().
  */
-function cross_manage_crossingblock_set_cross_parents_form($form, $form_state) {
+function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) {
 
   // DEFAULTS:
   //--------------------------
@@ -60,320 +60,229 @@ function cross_manage_crossingblock_set_cross_parents_form($form, $form_state) {
 
   // FORM PROPER:
   //--------------------------
-  $form['crossingblock'] = array(
+/**
+  $form['highlight'] = array(
     '#type' => 'fieldset',
-    '#title' => 'Crossing Block',
-    '#collapsible' => ($cb_set) ? TRUE: FALSE,
-    '#collapsed' => ($cb_set) ? TRUE: FALSE,
+    '#title' => 'Row Highlight'
   );
 
-  $form['crossingblock']['crop'] = array(
+  $form['highlight']['highlight_select'] = array(
     '#type' => 'select',
-    '#title' => 'Crop',
-    '#description' => 'The crop you are designing the crossing block for.',
-    '#options' => array(
-      'Cicer arietinum' => 'Chickpea',
-      'Phaseolus vulgaris' => 'Common Bean',
-      'Vicia faba' => 'Faba Bean',
-      'Pisum sativum' => 'Field Pea',
-      'Lens culinaris' => 'Lentil',
-    ),
-    '#default_value' => $species,
+    '#title' => 'Highlight Row',
+    '#description' => 'Select the detail you wish to highlight the rows based on.',
+    '#options' => $highlight_options,
+    '#default_value' => $highlight_detail,
+    '#prefix' => '<span class="cross-parents highlight highlight-select">',
+    '#suffix' => '</span>'
   );
 
-  $form['crossingblock']['year'] = array(
-    '#type' => 'select',
-    '#title' => 'Year',
-    '#description' => 'The year the crosses should be made in.',
-    '#options' => array_combine(range(date("Y")+2, 2000), range(date("Y")+2, 2000)),
-    '#default_value' => $cb_year,
+  $form['highlight']['highlight_key'] = array(
+    '#type' => 'markup',
+    '#markup' => "<table>
+                    <caption><strong>Highlight Colour Key</strong></caption>
+                    <tr><td class='highlight-key Small-Red'></td><td>Small Red</td></tr>
+                    <tr><td class='highlight-key French-Green'></td><td>French Green</td></tr>
+                  </table>",
+    '#prefix' => '<span class="cross-parents highlight highlight-key">',
+    '#suffix' => '</span>'
+  );
+*/
+  $parents_wrapper = 'parents-table';
+  $form['parents'] = array(
+    '#type' => ($cb_set) ? 'markup' : 'hidden',
+    '#prefix' => '<div id="' . $parents_wrapper . '">',
+    '#suffix' => '</div>',
+    '#tree' => TRUE,
+    '#theme' => 'cross_manage_crossingblock_parents',
   );
 
-  $form['crossingblock']['season'] = array(
-    '#type' => 'select',
-    '#title' => 'Season',
-    '#description' => 'The season the crosses should be made in.',
-    '#options' => array('Spring' => 'Spring','Summer' => 'Summer', 'Fall' => 'Fall', 'Winter' => 'Winter'),
-    '#default_value' => $cb_season,
-  );
+  $parent_options = array(0 => '', 1 => 'P1', 2 => 'P2', 3 => 'P3');
 
-  $form['crossingblock']['continue'] = array(
-    '#type' => ($cb_set) ? 'hidden': 'submit',
-    '#value' => 'Continue',
-  );
+  // When ajax updates the form to add a parent, keep all previously entered values. Otherwise,
+  // populate the form with mock_options
 
-  if ($cb_set) {
+  // Use For loop to ensure we always get one more row then there are options.
+  // NOTE: We didn't use +1 on existing options b/c there is an add-row element
+  // for the button which effectively adds our +1.
+  // ASSUMPTION: You will not add any elements to $form['parents'] other then
+  // the rows and the add parent button. If you do
+  // (ie: $form['parents']['another button']) you will get two empty rows.
+  $num_rows = (isset($form_state['values'])) ? sizeof($form_state['values']['parents']) - 1 : 1;
+  if (isset($form_state['clicked_button']) AND $form_state['clicked_button']['#value'] == 'Add Parent') {
+    $num_rows++;
+  }
+  for ($i=1; $i <= $num_rows; $i++) {
 
-    $form['highlight'] = array(
-      '#type' => 'fieldset',
-      '#title' => 'Row Highlight'
-    );
-
-    $form['highlight']['highlight_select'] = array(
-      '#type' => 'select',
-      '#title' => 'Highlight Row',
-      '#description' => 'Select the detail you wish to highlight the rows based on.',
-      '#options' => $highlight_options,
-      '#default_value' => $highlight_detail,
-      '#prefix' => '<span class="cross-parents highlight highlight-select">',
-      '#suffix' => '</span>'
-    );
-
-    $form['highlight']['highlight_key'] = array(
-      '#type' => 'markup',
-      '#markup' => "<table>
-                      <caption><strong>Highlight Colour Key</strong></caption>
-                      <tr><td class='highlight-key Small-Red'></td><td>Small Red</td></tr>
-                      <tr><td class='highlight-key French-Green'></td><td>French Green</td></tr>
-                    </table>",
-      '#prefix' => '<span class="cross-parents highlight highlight-key">',
-      '#suffix' => '</span>'
-    );
-
-    $form['parents'] = array(
-      '#type' => ($cb_set) ? 'fieldset' : 'hidden',
-      '#title' => 'Parents',
-      '#markup' => 'Please indicate the parents of the crosses you want to be made in the current crossing block',
-      '#tree' => TRUE,
-      '#theme' => 'cross_manage_crossingblock_parents'
-
-    );
-
-    $parent_options = array(0 => '', 1 => 'P1', 2 => 'P2', 3 => 'P3');
-
-    $mock_options = array();
-    $mock_options[] = array(
-      'pnum' => 1,
-      'line' => "CDC Redberry",
-      'line_nid' => 971836,
-      'source' => "Breeder's Seed",
-      'cross_to' => array(1 => 2, 2 => 0),
-      'details' => array(
-        'market_class' => array('title' => 'Market Class', 'value' => 'Small Red'),
-        'PEDIGREE' => array('title' => 'Pedigree', 'value' => 'Uknown/819-5R'),
-        'ORIGINAL_CROSS' => array('title' => 'Original Cross Number', 'value' => l('1254S-1','node/972302')),
-        'CROSSING_BLOCK' => array('title' => 'Parent in Recent Crossing Blocks', 'value' => 'Winter 2010 (P15), Winter 2009 (P7), Fall 2009 (P27), Summer 2009 (P27)'),
-      ),
-      'markers' => array(
-        'marker1' => array(
-          'name' => 'marker1',
-          'marker_type' => 'KASP',
-          'locus_type' => 'SNP',
-          'allele' => 'A'
-        ),
-        'marker2' => array(
-          'name' => 'marker2',
-          'marker_type' => 'KASP',
-          'locus_type' => 'SNP',
-          'allele' => 'c'
-        ),
-        'marker3' => array(
-          'name' => 'marker3',
-          'marker_type' => 'Illumina GoldenGate',
-          'locus_type' => 'SNP',
-          'allele' => 'GG'
-        ),
-        'marker4' => array(
-          'name' => 'marker4',
-          'marker_type' => 'SSR',
-          'locus_type' => 'SSR',
-          'allele' => '(ATA)3 TTA (ATA)3'
-        ),
-        'marker5' => array(
-          'name' => 'marker5',
-          'marker_type' => 'KASP',
-          'locus_type' => 'SNP',
-          'allele' => 'C'
-        ),
-      ),
-    );
-    $mock_options[] = array(
-      'pnum' => 2,
-      'line' => "6382S",
-      'line_nid' => 977354,
-      'source' => "Previous Crossing Block",
-      'cross_to' => array(1 => 3, 2 => 1, 3 => 0),
-      'details' => array(
-        'market_class' => array('title' => 'Market Class', 'value' => 'French Green'),
-        'PEDIGREE' => array('title' => 'Pedigree', 'value' => l('3160-21','node/975259')."/".l('4540-1','node/977335')),
-        'CROSSING_BLOCK' => array('title' => 'Created in', 'value' => 'Winter 2012'),
-      ),
-      'markers' => array(
-        'marker1' => array(
-          'name' => 'marker1',
-          'marker_type' => 'KASP',
-          'locus_type' => 'SNP',
-          'allele' => 'T'
-        ),
-        'marker2' => array(
-          'name' => 'marker2',
-          'marker_type' => 'KASP',
-          'locus_type' => 'SNP',
-          'allele' => 'G'
-        ),
-        'marker3' => array(
-          'name' => 'marker3',
-          'marker_type' => 'Illumina GoldenGate',
-          'locus_type' => 'SNP',
-          'allele' => 'GG'
-        ),
-        'marker4' => array(
-          'name' => 'marker4',
-          'marker_type' => 'SSR',
-          'locus_type' => 'SSR',
-          'allele' => '(ATA)5 ATT (ATA)1'
-        ),
-        'marker5' => array(
-          'name' => 'marker5',
-          'marker_type' => 'KASP',
-          'locus_type' => 'SNP',
-          'allele' => 'C'
-        ),
-      ),
-    );
-    $mock_options[] = array(
-      'pnum' => 3,
-      'line' => "L01",
-      'source' => "",
-      'cross_to' => array(1 => 0),
-      'details' => array(),
-      'line_not_valid' => TRUE
-    );
-
-
-    $tmp = array_keys($mock_options[0]['markers']);
-    $marker_options = array_combine($tmp,$tmp);
-    $marker_options[0] = 'Select Marker';
-
-    foreach ($mock_options as $k => $opt) {
+    // Either grab the existing options from the form state
+    if (isset($form_state['values']['parents'][$i])) {
+      $opt = $form_state['values']['parents'][$i];
       $pnum = $opt['pnum'];
       $line = $opt['line'];
       $source = $opt['source'];
       $cross_to = $opt['cross_to'];
-      $details = $opt['details'];
       $line_not_valid = (isset($opt['line_not_valid'])) ? $opt['line_not_valid']: FALSE;
       $line_validitity = ($line_not_valid) ? 'line-invalid' : 'line-valid';
-
-      $highlight_class = 'no-highlight';
-      if (isset($opt['details'][$highlight_detail])) {
-        $highlight_class = str_replace(' ','-', $opt['details'][$highlight_detail]['value']);
-      }
-
-      $form['parents'][$pnum] = array(
-        '#type' => 'markup',
-        //'#prefix' => '<span class="cross-parents row '.$highlight_class.'">',
-        //'#suffix' => '</span>'
-      );
-      if ($k+1 == sizeof($mock_options)) {
-        $form['parents'][$pnum]['#prefix'] = '<span class="cross-parents row last">';
-      }
-
-      $form['parents'][$pnum]['highlight_class'] = array(
-        '#type' => 'item',
-        '#value' => $highlight_class
-      );
-
-      $form['parents'][$pnum]['pnum'] = array(
-        '#type' => 'textfield',
-        //'#title' => 'Parent Number',
-        '#default_value' => $pnum,
-        '#prefix' => '<span class="pre-label">P</span>',
-        '#size' => 2
-      );
-
-      $more_info = "Unknown Line";
-      if (!empty($details)) {
-        $link = l(
-          'Full Listing',
-          'node/'.$opt['line_nid'],
-          array('attributes' => array('target'=>'_blank'))
-        );
-        $more_info = '<span class="line-details">';
-        $more_info .= $details['PEDIGREE']['value'].' ('.$link.')';
-        $more_info .= '</span>';
-      }
-      $form['parents'][$pnum]['line'] = array(
-        '#type' => 'textfield',
-        //'#title' => 'Line',
-        '#default_value' => $line,
-        '#description' => $more_info,
-        '#size' => 35
-      );
-
-      $form['parents'][$pnum]['source'] = array(
-        '#type' => 'textfield',
-        //'#title' => 'Source',
-        '#default_value' => $source,
-        '#size' => 35
-      );
-
-      // Add in Marker Data or Selection
-      $form['parents'][$pnum]['marker_data'] = array(
-        '#type' => 'markup',
-      );
-
-      if ($marker_data_avail) {
-
-      }
-      else {
-        $form['parents'][$pnum]['marker_data']['markers2screen'] = array(
-          '#type' => 'markup',
-          //'#title' => 'Markers to Screen Already Selected',
-          '#markup' => 'marker1, marker3, marker4'
-            . '<img src="http://icons.iconarchive.com/icons/visualpharm/icons8-metro-style/256/Very-Basic-Plus-icon.png">'
-            . ' '
-            . '<img src="http://icons.iconarchive.com/icons/visualpharm/icons8-metro-style/256/Very-Basic-Minus-icon.png">'
-        );
-        $form['parents'][$pnum]['marker_data']['is_data'] = array(
-          '#type' => 'markup',
-          '#value' => FALSE
-        );
-      }
-
-      $form['parents'][$pnum]['notes'] = array(
-        '#type' => 'markup'
-      );
-
-      $form['parents'][$pnum]['notes']['breeder_notes'] = array(
-        '#type' => 'textarea',
-        '#default_value' => 'Breeder Notes',
-        '#rows' => 1
-      );
-
-      $form['parents'][$pnum]['notes']['instructions'] = array(
-        '#type' => 'textarea',
-        '#default_value' => 'Instructions',
-        '#rows' => 1
-      );
-
-      $form['parents'][$pnum]['cross_to'] = array(
-        '#type' => 'item',
-        //'#title' => 'Cross To',
-      );
-
-      foreach ($cross_to as $cross_to_num => $cross_to_default) {
-        $form['parents'][$pnum]['cross_to'][$cross_to_num] = array(
-          '#type' => 'select',
-          '#options' => $parent_options,
-          '#default_value' => $cross_to_default
-        );
-      }
+    }
+    // OR if this is the last row then there are no existing values
+    // so set blank defaults.
+    else {
+      $pnum = $i;
+      $line = '';
+      $source = '';
+      $cross_to = array();
+      $details = '';
+      $line_not_valid = FALSE;
     }
 
-    $form['parents']['add-row'] = array(
-      '#type' => 'submit',
-      '#value' => 'Add Parent',
-      '#prefix' => '<span class="cross-parents add-more">',
-      '#suffix' => '</span>'
+    $highlight_class = 'no-highlight';
+    if (isset($opt['details'][$highlight_detail])) {
+      $highlight_class = str_replace(' ','-', $opt['details'][$highlight_detail]['value']);
+    }
+
+    $form['parents'][$pnum] = array(
+      '#type' => 'markup',
+      //'#prefix' => '<span class="cross-parents row '.$highlight_class.'">',
+      //'#suffix' => '</span>'
+    );
+    if ($i == ($num_rows - 1)) {
+      $form['parents'][$pnum]['#prefix'] = '<span class="cross-parents row last">';
+    }
+
+    $form['parents'][$pnum]['highlight_class'] = array(
+      '#type' => 'item',
+      '#value' => $highlight_class
     );
 
-    $form['submit-cb'] = array(
-      '#type' => 'submit',
-      '#value' => 'Submit Crossing Plans'
+    $form['parents'][$pnum]['pnum'] = array(
+      '#type' => 'textfield',
+      //'#title' => 'Parent Number',
+      '#default_value' => $pnum,
+      '#prefix' => '<span class="pre-label">P</span>',
+      '#size' => 2
     );
+
+    $more_info = "Unknown Line";
+    if (!empty($details)) {
+      $link = l(
+        'Full Listing',
+        'node/'.$opt['line_nid'],
+        array('attributes' => array('target'=>'_blank'))
+      );
+      $more_info = '<span class="line-details">';
+      $more_info .= $details['PEDIGREE']['value'].' ('.$link.')';
+      $more_info .= '</span>';
+    }
+    $form['parents'][$pnum]['line'] = array(
+      '#type' => 'textfield',
+      //'#title' => 'Line',
+      '#default_value' => $line,
+      '#description' => $more_info,
+      '#size' => 35
+    );
+
+    $form['parents'][$pnum]['source'] = array(
+      '#type' => 'textfield',
+      //'#title' => 'Source',
+      '#default_value' => $source,
+      '#size' => 35
+    );
+
+    $form['parents'][$pnum]['notes'] = array(
+      '#type' => 'markup'
+    );
+
+    $form['parents'][$pnum]['notes']['breeder_notes'] = array(
+      '#type' => 'textarea',
+      '#default_value' => 'Breeder Notes',
+      '#rows' => 1
+    );
+
+    $form['parents'][$pnum]['notes']['instructions'] = array(
+      '#type' => 'textarea',
+      '#default_value' => 'Instructions',
+      '#rows' => 1
+    );
+
+    $cross_to_wrapper = 'cross-to-' . $pnum;
+    $form['parents'][$pnum]['cross_to'] = array(
+      '#type' => 'item',
+      '#prefix' => '<div id="' . $cross_to_wrapper . '">',
+      '#suffix' => '</div>',
+      //'#title' => 'Cross To',
+    );
+
+    // Add a number of cross to dropdowns to allow breeders to specify what
+    // parents they want to cross with the current F1
+    // NOTE: Ajax is used to ensure that there is always one more select box
+    // than there are parents selected to ensure that breeders can add more parents.
+    // @TODO: Implement ajax.
+    $existing_cross_to = (!empty($form_state['values']['parents'][$pnum]['cross_to'])) ? $form_state['values']['parents'][$pnum]['cross_to'] : array();
+
+    $num_crosses = (!empty($form_state['values']['parents'][$pnum]['cross_to'])) ? sizeof($form_state['values']['parents'][$pnum]['cross_to']) : 1;
+    if (isset($form_state['triggering_element'])
+      AND isset($form_state['triggering_element']['#id'])
+      AND preg_match('/^edit-parents-' . $i . '/', $form_state['triggering_element']['#id']))
+    {
+      $num_crosses++;
+    }
+    for ($j = 1; $j <= $num_crosses; $j++) {
+      if ($j == $num_crosses) {
+        $cross_to_default = NULL;
+      }
+      else {
+        $cross_to_default = $form_state['values']['parents'][$pnum]['cross_to'][$j];
+      }
+      $form['parents'][$pnum]['cross_to'][] = array(
+        '#type' => 'select',
+        '#options' => $parent_options,
+        '#default_value' => $cross_to_default,
+        '#ajax' => array(
+          'callback' => 'ajax_parents_cross_to_callback',
+          'wrapper' => $cross_to_wrapper,
+        ),
+      );
+    }
+
   }
 
+  // Implement ajax to add a new row to the parents table without losing any
+  // information that has already been entered.
+  $form['parents']['add-row'] = array(
+    '#type' => 'submit',
+    '#value' => 'Add Parent',
+    '#prefix' => '<span class="cross-parents add-more">',
+    '#suffix' => '</span>',
+    /**
+    '#ajax' => array(
+      'callback' => 'ajax_parents_add_row_callback',
+      'wrapper' => $parents_wrapper,
+    ),*/
+  );
+
+  $form['submit-cb'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit Crossing Plans',
+  );
+
   return $form;
+}
+
+/**
+  * MOCK-UP Form validation for breeders to set crosses
+  *
+  *
+  *
+  */
+function cross_manage_crossingblock_set_cross_parents_form_validate($form, &$form_state) {
+
+//dpm($form, 'form in validate');
+//dpm($form_state, 'form state in validate');
+
+  if ($form_state['triggering_element']['#type'] == 'select') {
+    foreach ($form_state['values']['parents'] as $pnum => $elements) {
+      $form_state['values']['parents'][$pnum]['cross_to'] = array_filter($elements['cross_to']);
+    }
+  }
 }
 
 /**
@@ -384,6 +293,26 @@ function cross_manage_crossingblock_set_cross_parents_form($form, $form_state) {
  */
 function cross_manage_crossingblock_set_cross_parents_form_submit(&$form, &$form_state) {
 
+  switch ($form_state['clicked_button']['#value']) {
+    case 'Submit Crossing Plans':
+      $form_state['rebuild'] = FALSE;
+      drupal_set_message('Successfully submitted crossing plans');
+    break;
+    case 'Add Parent':
+      $form_state['rebuild'] = TRUE;
+    break;
+  }
+}
+
+
+function ajax_parents_add_row_callback($form, $form_state) {
+  return $form['parents'];
+}
+
+
+function ajax_parents_cross_to_callback($form, $form_state) {
+  $pnum = $form_state['triggering_element']['#array_parents'][1];
+  return $form['parents'][$pnum]['cross_to'];
 }
 
 /**
@@ -394,37 +323,57 @@ function cross_manage_crossingblock_set_cross_parents_form_submit(&$form, &$form
  * F1's resulting from the previous crossing block. The ability to provide
  * additional instructions including which F1s to grow-out is also available.
  */
-function cross_manage_crossingblock_set_cross_f1s_form($form, $form_state) {
+function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
+
+//dpm($form_state, 'form_state');
 
   // My Hardcoded F1 data for the example.
   // @TODO: Select this data from chado for the crossing block previous to the current one.
   $mock = array(
-    '2604S' => array('2604S','SX','P1/P15','NY5-161 White/Jetwhite4-11-21', array('2605S','P6','P7')),
-    '2605S' => array('2605S','SX','P1/P22','NY5-161 White/WC-BC1-1',array('2604S')),
-    '2606S' => array('2606S','SX','P2/P16','NY5-161 Brown/Jetblack4-15-3',array('2608S','P4')),
-    '2607aS' => array('2607aS','SX','P2/P22','NY5-161 Brown/WC-BC1-1',array('P5')),
-    '2608S' => array('2608S','SX','P3/P17','G9345/Jetblack4-11-11',array()),
-    '2610bS' => array('2610bS','SX','P24/P11','1533a-15/Higuera-E',array()),
-    '2613bS' => array('2613bS','SX','P47/P13','GDR6aa/737-22',array('P12','P13','P15','P17')),
-    '2615S' => array('2615S','SX','P20/P15','316-13/Jetwhite4-11-21',array('P31')),
-    '2616S' => array('2616S','SX','P26/P15','1441-8/Jetwhite4-11-21',array('P4')),
-    '2617S' => array('2617S','SX','P27/P15','Expresso-5/Jetwhite4-11-21',array('P5')),
-    '2618S' => array('2618S','SX','P28/P15','1780TF3-1/Jetwhite4-11-21',array('P6','P7')),
-    '2619S' => array('2619S','SX','P41/P15','GDR32a-2/Jetwhite4-11-21',array('P12','P13')),
-    '2620bS' => array('2620bS','SX','P20/P16','316-13/Jetblack4-15-3',array('P31')),
-    '2621S' => array('2621S','SX','P26/P16','1441-8/Jetblack4-15-3',array('2622S')),
-    '2622S' => array('2622S','SX','P27/P16','Expresso-5/Jetblack4-15-3',array('P4','P5'))
+    '2604S' => array('2604S','SX','NY5-161 White/Jetwhite4-11-21','20',array('2605S','P6','P7')),
+    '2605S' => array('2605S','SX','NY5-161 White/WC-BC1-1','21',array('2604S')),
+    '2606S' => array('2606S','SX','NY5-161 Brown/Jetblack4-15-3','22',array('2608S','P4')),
+    '2607aS' => array('2607aS','SX','NY5-161 Brown/WC-BC1-1','23',array('P5')),
+    '2608S' => array('2608S','SX','G9345/Jetblack4-11-11','24',array()),
+    '2610bS' => array('2610bS','SX','1533a-15/Higuera-E','25',array()),
+    '2613bS' => array('2613bS','SX','GDR6aa/737-22','26',array('P12','P13','P15','P17')),
+    '2615S' => array('2615S','SX','316-13/Jetwhite4-11-21','27',array('P31')),
+    '2616S' => array('2616S','SX','1441-8/Jetwhite4-11-21','28',array('P4')),
+    '2617S' => array('2617S','SX','Expresso-5/Jetwhite4-11-21','29',array('P5')),
+    '2618S' => array('2618S','SX','1780TF3-1/Jetwhite4-11-21','30',array('P6','P7')),
+    '2619S' => array('2619S','SX','GDR32a-2/Jetwhite4-11-21','25',array('P12','P13')),
+    '2620bS' => array('2620bS','SX','316-13/Jetblack4-15-3','26',array('P31')),
+    '2621S' => array('2621S','SX','1441-8/Jetblack4-15-3','27',array('2622S')),
+    '2622S' => array('2622S','SX','Expresso-5/Jetblack4-15-3','28',array('P4','P5'))
+  );
+
+  $form['#attached']['css'][] = array(
+    'type' => 'inline',
+    'data' => '
+      .form-item.form-type-textfield {
+        text-align: right;
+      }
+      .form-item label {
+        display:inline-block;
+        width:55px;
+        text-align:right;
+      }
+      .form-text {
+        display:inline;
+        width:auto;
+      }
+    '
   );
 
   // My Hardcoded Parents for the example.
   // These parents were added for this crossing block using the parents form
   // defined in cross_manage_crossingblock_set_cross_parents_form().
   // @TODO: Select these from the chado stock table.
-  $parent_options = array('2604S', '2608S', '2622S', 'P4','P5','P6','P7','P12','P13','P15','P17','P31');
+  $parent_options = array('', '2604S', '2608S', '2622S', 'P4','P5','P6','P7','P12','P13','P15','P17','P31');
   $parent_options = array_combine($parent_options, $parent_options);
 
   $form['f1'] = array(
-    '#type' => 'fieldset',
+    '#type' => 'markup',
     '#title' => "F1's",
     // We denote this fieldset as a tree to ensure that the data is nested
     // when it makes it to the submit function.
@@ -452,9 +401,68 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, $form_state) {
     $form['f1'][$cross_num]['pedigree'] = array(
       '#type' => 'item',
       //'#title' => 'Pedigree',
-      '#markup' => $details[2] . '<br />' . $details[3],
+      '#markup' => $details[2],
     );
 
+   // The 1st way to represent number of seeds for 1) crossing block, 2) reserve, 3) grow-out.
+    $form['f1'][$cross_num]['seed_num'] = array(
+      '#type' => 'item',
+      //'#title' => 'Total Seed Count',
+      '#markup' => $details[3],
+    );
+
+    $form['f1'][$cross_num]['seed_allocate']['cross'] = array(
+      '#type' => 'textfield',
+      '#title' => t("Cross:"),
+      '#size' => 3,
+    );
+
+    $form['f1'][$cross_num]['seed_allocate']['reserve'] = array(
+      '#type' => 'textfield',
+      '#title' => t("Reserve:"),
+      '#size' => 3,
+    );
+
+    $form['f1'][$cross_num]['seed_allocate']['grow-out'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Grow-out:'),
+      '#size' => 3,
+    );
+
+/**
+   // The 2nd way to represent number of seeds for 1) crossing block, 2) reserve, 3) grow-out.
+    $form['f1'][$cross_num]['seed_num'] = array(
+      '#type' => 'item',
+      //'#title' => 'Total Seed Count',
+      '#markup' => $details[3],
+    );
+
+    $form['f1'][$cross_num]['seed2cross'] = array(
+      '#type' => 'textfield',
+      //'#title' => 'Seed to Cross',
+      '#size' => 3,
+      '#default_value' => $details[3],
+    );
+
+    $form['f1'][$cross_num]['seed2reserve'] = array(
+      '#type' => 'textfield',
+      //'#title' => 'Seed to Reserve',
+      '#size' => 3,
+      '#default_value' => '0',
+    );
+
+    $form['f1'][$cross_num]['seed2growout'] = array(
+      '#type' => 'textfield',
+      //'#title' => 'Seed to Grow-out',
+      '#size' => 3,
+      '#default_value' => '0',
+    );
+*/
+
+    // Add the ability to select markers to screen for each F1. Clicking on '+' would
+    // bring up a popup window to allow breeders to browse/select markers.
+    // @TODO: Implement marker selection
+    /**
     $form['f1'][$cross_num]['marker_data']['markers2screen'] = array(
       '#type' => 'markup',
       //'#title' => 'Markers to Screen Already Selected',
@@ -463,6 +471,7 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, $form_state) {
         . ' '
         . '<img src="http://icons.iconarchive.com/icons/visualpharm/icons8-metro-style/256/Very-Basic-Minus-icon.png" height="16" weight="16" style="border:none;">'
     );
+    */
 
     $form['f1'][$cross_num]['notes']['breeder_notes'] = array(
       '#type' => 'textarea',
@@ -476,14 +485,18 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, $form_state) {
       '#rows' => 1
     );
 
-    $form['f1'][$cross_num]['notes']['grow_out'] = array(
-      '#type' => 'checkbox',
-      '#title' => 'Grow-out?',
-      '#default_value' => TRUE,
-    );
+    // Not an ideal way for breeders to specify reserve seed for grow-outs
+//     $form['f1'][$cross_num]['notes']['grow_out'] = array(
+//       '#type' => 'checkbox',
+//       '#title' => 'Grow-out?',
+//       '#default_value' => TRUE,
+//     );
 
+    $cross_to_wrapper = 'cross-to-' . $cross_num;
     $form['f1'][$cross_num]['cross_to'] = array(
       '#type' => 'item',
+      '#prefix' => '<div id="' . $cross_to_wrapper . '">',
+      '#suffix' => '</div>',
       //'#title' => 'Cross To',
     );
 
@@ -492,15 +505,39 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, $form_state) {
     // NOTE: Ajax is used to ensure that there is always one more select box
     // than there are parents selected to ensure that breeders can add more parents.
     // @TODO: Implement ajax.
-    foreach ($details[4] as $cross_to_num => $cross_to_default) {
-      $form['f1'][$cross_num]['cross_to'][$cross_to_default] = array(
-        '#type' => 'select',
-        '#options' => $parent_options,
-        '#default_value' => $cross_to_default
-      );
-    }
-  }
+    $existing_cross_to = (!empty($form_state['values']['f1'][$cross_num]['cross_to'])) ? $form_state['values']['f1'][$cross_num]['cross_to'] : array();
 
+    foreach ($existing_cross_to as $cross_to_default) {
+      //if (!empty($cross_to_default)) {
+        // Single select box with default set to value from form_state.
+        $form['f1'][$cross_num]['cross_to'][] = array(
+          '#type' => 'select',
+          '#options' => $parent_options,
+          '#default_value' => $cross_to_default,
+          '#ajax' => array(
+            'callback' => 'ajax_f1_cross_to_callback',
+            'wrapper' => $cross_to_wrapper,
+          ),
+        );
+      //}
+    }
+
+    // Then create an additional select to allow them to add a new cross.
+    $form['f1'][$cross_num]['cross_to'][] = array(
+      '#type' => 'select',
+      '#options' => $parent_options,
+      '#ajax' => array(
+        'callback' => 'ajax_f1_cross_to_callback',
+        'wrapper' => $cross_to_wrapper,
+      ),
+    );
+
+    $form['submit-f1'] = array(
+      '#type' => 'submit',
+      '#value' => 'Send to Field Lab',
+    );
+
+  }
   return $form;
 }
 
@@ -510,6 +547,23 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, $form_state) {
  *
  * Implements hook_form_submit().
  */
-function cross_manage_crossingblock_set_cross_f1s_form_submit($form, $form_state) {
+function cross_manage_crossingblock_set_cross_f1s_form_validate($form, &$form_state) {
+  foreach ($form_state['values']['f1'] as $cross_num => $elements) {
+    $form_state['values']['f1'][$cross_num]['cross_to'] = array_filter($elements['cross_to']);
+  }
+}
 
+/**
+ * MOCK-UP Form allowing breeders to set the crosses to be made
+ * for a given crossing block.
+ *
+ * Implements hook_form_submit().
+ */
+function cross_manage_crossingblock_set_cross_f1s_form_submit($form, $form_state) {
+  drupal_set_message('Successfully submitted F1s form to Field Lab');
+}
+
+function ajax_f1_cross_to_callback($form, $form_state) {
+  $cross_num = $form_state['triggering_element']['#array_parents'][1];
+  return $form['f1'][$cross_num]['cross_to'];
 }
