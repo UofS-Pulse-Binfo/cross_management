@@ -1,0 +1,193 @@
+<?php
+/**
+ * @file
+ * Handles installation of this module.
+ */
+
+/**
+ * Implements hook_schema().
+ *
+ * Create Drupal database tables for storing application-specific data
+ * related to cross management.
+ */
+function cross_manage_schema() {
+  $schema = array();
+
+  // Stores the parents of a given crossing block where each parent is a
+  // stock stored in chado and is further denoted by a seed source.
+  $schema['cross_manage_parents'] = array(
+    'description' => 'Parents of a given crossing block.',
+    'fields' => array(
+      'cb_parent_id' => array(
+        'description' => 'The primary identifier for a crossing block parent.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'stock_id' => array(
+        'description' => 'The chado stock describing this parent.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'cb_year' => array(
+        'description' => 'The crossing block year.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'cb_season' => array(
+        'description' => 'The crossing block season (one of Spring, Summer, Winter, Fall).',
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => TRUE,
+      ),
+      'seed_source' => array(
+        'description' => 'a textual description of what seed to plant.',
+        'type' => 'text',
+        'not null' => TRUE
+      ),
+    ),
+    'indexes' => array(
+      'parent_stock' => array('stock_id'),
+      'crossing_block' => array('cb_year', 'cb_season'),
+    ),
+    'unique keys' => array(
+      'chado_stock' => array('stock_id', 'cb_year', 'cb_season', 'seed_source'),
+    ),
+    'foreign keys' => array(
+      // Drupal won't enforce this :(.
+      'chado_stock' => array(
+        'table' => 'chado.stock',
+        'columns' => array('stock_id' => 'stock_id'),
+      ),
+    ),
+    'primary key' => array('cb_parent_id'),
+  );
+
+  // Stores each of the crosses that the breeder planned to make for a given
+  // crossing block.
+  // NOTE: this doesn't match exactly with the crosses made due to errors at
+  // the fieldlab thus we don't store them in chado. The crosses actually made
+  // will be stored in chado.
+  $schema['cross_manage_planned_crosses'] = array(
+    'description' => 'The crosses planned for a given crossing block.',
+    'fields' => array(
+      'cb_cross_id' => array(
+        'description' => 'The primary identifier for a crossing block cross.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'maternal_parent_id' => array(
+        'description' => 'The crossing block parent to use as the materal parent of the cross.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'paternal_parent_id' => array(
+        'description' => 'The crossing block parent to use as the pateral parent of the cross.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+    ),
+    'indexes' => array(
+      'maternal_parent_stock' => array('maternal_parent_id'),
+      'paternal_parent_stock' => array('paternal_parent_id'),
+    ),
+    'unique keys' => array(
+      // NOTE: the parental pair is unique because in the parents table there
+      // is a separate parent record per crossing block.
+      'parents' => array('maternal_parent_id', 'paternal_parent_id'),
+    ),
+    'foreign keys' => array(
+      'maternal_parent' => array(
+        'table' => 'cross_manage_parents',
+        'columns' => array('maternal_parent_id' => 'cb_parent_id'),
+      ),
+      'pateral_parent' => array(
+        'table' => 'cross_manage_parents',
+        'columns' => array('paternal_parent_id' => 'cb_parent_id'),
+      ),
+    ),
+    'primary key' => array('cb_cross_id'),
+  );
+
+  // Store notes/instructions related to the breeding process.
+  $schema['cross_manage_notes'] = array(
+    'description' => 'Notes/instructions related to the breeding process.',
+    'fields' => array(
+      'cb_parent_id' => array(
+        'description' => 'The crossing block parent the note is about.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'The type of note (one of breeder_selfnote, fieldlab_instruction).',
+        'type' => 'varchar',
+        'length' => 30,
+        'not null' => TRUE,
+      ),
+      'value' => array(
+        'description' => 'A textual note.',
+        'type' => 'text',
+        'not null' => TRUE
+      ),
+    ),
+    'indexes' => array(
+      'cb_parent' => array('cb_parent_id'),
+      'note_type' => array('type'),
+    ),
+    'unique keys' => array(),
+    'foreign keys' => array(
+      'cb_parent' => array(
+        'table' => 'cross_manage_parents',
+        'columns' => array('cb_parent_id' => 'cb_parent_id'),
+      ),
+    ),
+    'primary key' => array('cb_parent_id', 'type'),
+  );
+
+  // Part of the breeding process is to allocate seed from the resulting crosses
+  // for various uses (ie: grow-out to F1, use as a parent in the next crossing
+  // block, save for a "rainy day" ;) ). This table keeps track of those allocations.
+  $schema['cross_manage_seed_allocation'] = array(
+    'description' => 'Seed allocations for each F1.',
+    'fields' => array(
+      'cb_parent_id' => array(
+        'description' => 'The crossing block parent for the F1 (created automatically by the F1 Crosses form).',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'The type of seed allocation (one of cross, reserve, grow-out).',
+        'type' => 'varchar',
+        'length' => 15,
+        'not null' => TRUE,
+      ),
+      'value' => array(
+        'description' => 'The number of seeds to allocate.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE
+      ),
+    ),
+    'indexes' => array(
+      'cb_parent' => array('cb_parent_id'),
+      'allocation_type' => array('type'),
+    ),
+    'unique keys' => array(),
+    'foreign keys' => array(
+      'cb_parent' => array(
+        'table' => 'cross_manage_parents',
+        'columns' => array('cb_parent_id' => 'cb_parent_id'),
+      ),
+    ),
+    'primary key' => array('cb_parent_id', 'type'),
+  );
+
+  return $schema;
+}
