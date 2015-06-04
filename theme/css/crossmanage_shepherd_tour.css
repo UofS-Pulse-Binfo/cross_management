@@ -1,0 +1,104 @@
+/**
+ * @file
+ * Styling of the Shepherd Site Tours used for tutorials throughout
+ * the cross management module.
+ */
+
+div.shepherd-step {
+  /* Fixed width needed to keep steps from expanding based on contents */
+  width: 300px;
+}
+
+/* The start tour link */
+a.tour-start-link {
+  line-height: 0em;
+  float: right;
+  position: relative;
+}
+a.tour-start-link.tour-image-link {
+  top: -85px;
+  right: 35px;
+}
+a.tour-start-link.tour-image-link img {
+  width:40px;
+  height: 40px;
+  border: none;
+  padding-right: 10px;
+}
+a.tour-start-link.tour-textual-link {
+  top: -67px;
+  font-style: italic;
+  clear: right;
+  padding-right: 5px;
+  /** old button format
+  top: -55px;
+  border: none;
+  border-radius: 3px;
+  margin: 0 0.5em 0 0;
+  font-size: 15px;
+  font-family: inherit;
+  line-height: 0em;
+  padding: 15px 20px 15px 20px;
+  background: #406F18;
+  background-image: -webkit-linear-gradient(top, #406F18, #6B8A3C);
+  background-image: -moz-linear-gradient(top, #406F18, #6B8A3C);
+  background-image: -ms-linear-gradient(top, #406F18, #6B8A3C);
+  background-image: -o-linear-gradient(top, #406F18, #6B8A3C);
+  background-image: linear-gradient(to bottom, #406F18, #6B8A3C);
+  -webkit-border-radius: 5;
+  -moz-border-radius: 5;
+  color: #fff;
+  */
+}
+
+/**
+a.tour-start-link:hover, a.tour-start-link:active {
+  background: #4F981B;
+  background-image: -webkit-linear-gradient(top, #4F981B, #79AA39);
+  background-image: -moz-linear-gradient(top, #4F981B, #79AA39);
+  background-image: -ms-linear-gradient(top, #4F981B, #79AA39);
+  background-image: -o-linear-gradient(top, #4F981B, #79AA39);
+  background-image: linear-gradient(to bottom, #4F981B, #79AA39);
+  text-decoration: none;
+  color: #fff;
+}
+
+a.tour-start-link:focus {
+  text-decoration: none;
+  color: #fff;
+}
+*/
+
+/* The drop shadow behind the box outlining the step */
+.shepherd-element.shepherd-theme-arrows .shepherd-content {
+  -webkit-filter: drop-shadow(0 0 5px rgba(49,67,85,0.9));
+}
+
+/* Header */
+.shepherd-element.shepherd-theme-arrows.shepherd-has-title .shepherd-content header {
+  background: #314355;
+  background: rgba(49,67,85);
+  color: #fff;
+}
+
+/* The Cancel Link - default color when there is NO header for the step */
+.shepherd-element.shepherd-theme-arrows .shepherd-content header a.shepherd-cancel-link {
+  color: #000;
+  opacity: 0.5;
+}
+
+/* The Cancel Link - this sets the color when there IS a header for the step */
+.shepherd-element.shepherd-theme-arrows.shepherd-has-title .shepherd-content header a.shepherd-cancel-link {
+  color: #FFF;
+  opacity: 0.5;
+}
+
+/* The Next button */
+.shepherd-element.shepherd-theme-arrows .shepherd-content footer .shepherd-buttons li .shepherd-button {
+  background: #406F18;
+}
+
+/* The Done! button */
+.shepherd-element.shepherd-theme-arrows .shepherd-content footer .shepherd-buttons li .shepherd-button.shepherd-button-complete {
+  background: #A09EAE;
+}

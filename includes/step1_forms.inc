@@ -5,8 +5,9 @@
  */
 
 /**
- * MOCK-UP: Form allowing breeders to set the crosses to be made
+ * Form allowing breeders to set the crosses to be made
  * for a given crossing block.
+ * @TODO: Extract data from Chado where necessary
  *
  * Implements hook_form().
  */
@@ -58,6 +59,30 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
     ),
   );
 
+  // Add Joyride Site Tour
+  //--------------------------
+  //$form['#attached']['library'][] = array('system', 'joyride');
+
+
+  // Add Shepherd Site Tour
+  //--------------------------
+  $crossmanage_path = drupal_get_path('module', 'cross_manage');
+  $shepherd_path = libraries_get_path('shepherd');
+  $form['#attached']['js'][] = $shepherd_path . '/shepherd.min.js';
+  $form['#attached']['js'][] = $crossmanage_path . '/theme/js/CrossManage_Parentsform_ShepherdTour.js';
+  $form['#attached']['css'][] = $shepherd_path .'/css/shepherd-theme-arrows.css';
+  $form['#attached']['css'][] = array(
+    'data' => $crossmanage_path . '/theme/css/crossmanage_shepherd_tour.css',
+    'weight' => 10
+  );
+
+  // Add site tour link.
+  //--------------------------
+  $form['start_tour'] = array(
+    '#type' => 'markup',
+    '#markup' => theme('cross_manage_shepherd_start_tour_link')
+  );
+
   // FORM PROPER:
   //--------------------------
 /**
@@ -87,6 +112,8 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
     '#suffix' => '</span>'
   );
 */
+
+  // Begin parents table
   $parents_wrapper = 'parents-table';
   $form['parents'] = array(
     '#type' => ($cb_set) ? 'markup' : 'hidden',
@@ -96,21 +123,37 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
     '#theme' => 'cross_manage_crossingblock_parents',
   );
 
-  $parent_options = array(0 => '', 1 => 'P1', 2 => 'P2', 3 => 'P3');
+  // @TODO: Set options to cross to based on rows that have been populated
+  // (NOTE: Do we also want to pull options from the database?)
+  //$parent_options = array(0 => '', 1 => 'P1', 2 => 'P2', 3 => 'P3');
 
-  // When ajax updates the form to add a parent, keep all previously entered values. Otherwise,
-  // populate the form with mock_options
-
-  // Use For loop to ensure we always get one more row then there are options.
-  // NOTE: We didn't use +1 on existing options b/c there is an add-row element
-  // for the button which effectively adds our +1.
-  // ASSUMPTION: You will not add any elements to $form['parents'] other then
-  // the rows and the add parent button. If you do
-  // (ie: $form['parents']['another button']) you will get two empty rows.
   $num_rows = (isset($form_state['values'])) ? sizeof($form_state['values']['parents']) - 1 : 1;
+
+  // Set the cross-to options - first value is blank so the drop-down is initially blank
+  $parent_options = array(0 => '');
+  for ($m=1; $m <= $num_rows; $m++) {
+    if (isset($form_state['values']['parents'][$m]['line']) AND $form_state['values']['parents'][$m]['line'] != '') {
+      $parent_options[] = $form_state['values']['parents'][$m]['line'];
+    }
+    else if (isset($form_state['values']['parents'][$m]['pnum'])) {
+      $parent_options[] = 'P' . $form_state['values']['parents'][$m]['pnum'];
+    }
+  }
+
+  // Only add an extra row if the "Add Parent" button was clicked
+  // We also add the new option to the parent options in 'Cross To'
+  // ASSUMPTION: P numbers are determined by the "nth" row value (ex: row 3 = P3)
   if (isset($form_state['clicked_button']) AND $form_state['clicked_button']['#value'] == 'Add Parent') {
     $num_rows++;
+    $parent_options[] = 'P' . $num_rows;
   }
+
+  // Use For loop to ensure we always get one more row than options.
+  // NOTE: We didn't use +1 on existing options b/c there is an add-row element
+  // for the button which effectively adds our +1.
+  // ASSUMPTION: You will not add any elements to $form['parents'] other than
+  // the rows and the add parent button. If you do,
+  // (ie: $form['parents']['another button']) you will get two empty rows.
   for ($i=1; $i <= $num_rows; $i++) {
 
     // Either grab the existing options from the form state
@@ -158,11 +201,18 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
       //'#title' => 'Parent Number',
       '#default_value' => $pnum,
       '#prefix' => '<span class="pre-label">P</span>',
-      '#size' => 2
+      '#size' => 2,
+      '#required' => TRUE,
     );
 
+    $form['parents'][$pnum]['line_nid'] = array(
+      '#type' => 'hidden',
+      '#value' => (isset($opt['line_nid'])) ? $opt['line_nid'] : NULL,
+    );
+
+    // @TODO Get the pedigree of the line if its available
     $more_info = "Unknown Line";
-    if (!empty($details)) {
+    if (!empty($opt['line_nid'])) {
       $link = l(
         'Full Listing',
         'node/'.$opt['line_nid'],
@@ -172,35 +222,38 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
       $more_info .= $details['PEDIGREE']['value'].' ('.$link.')';
       $more_info .= '</span>';
     }
+
     $form['parents'][$pnum]['line'] = array(
       '#type' => 'textfield',
       //'#title' => 'Line',
       '#default_value' => $line,
       '#description' => $more_info,
-      '#size' => 35
+      '#size' => 35,
+      '#required' => TRUE,
     );
 
     $form['parents'][$pnum]['source'] = array(
       '#type' => 'textfield',
       //'#title' => 'Source',
       '#default_value' => $source,
-      '#size' => 35
+      '#size' => 35,
+      '#required' => TRUE,
     );
 
     $form['parents'][$pnum]['notes'] = array(
-      '#type' => 'markup'
+      '#type' => 'markup',
     );
 
     $form['parents'][$pnum]['notes']['breeder_notes'] = array(
       '#type' => 'textarea',
-      '#default_value' => 'Breeder Notes',
-      '#rows' => 1
+      '#attributes' => array('placeholder' => 'Breeder Notes'),
+      '#rows' => 1,
     );
 
     $form['parents'][$pnum]['notes']['instructions'] = array(
       '#type' => 'textarea',
-      '#default_value' => 'Instructions',
-      '#rows' => 1
+      '#attributes' => array('placeholder' => 'Instructions'),
+      '#rows' => 1,
     );
 
     $cross_to_wrapper = 'cross-to-' . $pnum;
@@ -212,41 +265,45 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
     );
 
     // Add a number of cross to dropdowns to allow breeders to specify what
-    // parents they want to cross with the current F1
+    // parents they want to cross with the current line
     // NOTE: Ajax is used to ensure that there is always one more select box
-    // than there are parents selected to ensure that breeders can add more parents.
-    // @TODO: Implement ajax.
-    $existing_cross_to = (!empty($form_state['values']['parents'][$pnum]['cross_to'])) ? $form_state['values']['parents'][$pnum]['cross_to'] : array();
+    // than there are parents selected so that breeders can add more parents
+    // to cross with.
 
-    $num_crosses = (!empty($form_state['values']['parents'][$pnum]['cross_to'])) ? sizeof($form_state['values']['parents'][$pnum]['cross_to']) : 1;
-    if (isset($form_state['triggering_element'])
-      AND isset($form_state['triggering_element']['#id'])
-      AND preg_match('/^edit-parents-' . $i . '/', $form_state['triggering_element']['#id']))
-    {
-      $num_crosses++;
-    }
-    for ($j = 1; $j <= $num_crosses; $j++) {
-      if ($j == $num_crosses) {
-        $cross_to_default = NULL;
-      }
-      else {
+    // Determine how many select boxes we need.
+    $num_crosses = (!empty($form_state['values']['parents'][$pnum]['cross_to'])) ? sizeof($form_state['values']['parents'][$pnum]['cross_to']) : 0;
+
+    for ($j = 0; $j <= $num_crosses; $j++) {
+      // Determine our default value for the next select box.
+      if (isset($form_state['values']['parents'][$pnum]['cross_to'][$j])) {
+        // Default value is what has been previously entered
         $cross_to_default = $form_state['values']['parents'][$pnum]['cross_to'][$j];
+        // If the final box is already empty, don't iterate through the loop a final time
+        // Otherwise, another empty box would be added.
+        if (empty($form_state['values']['parents'][$pnum]['cross_to'][$j]) AND ($j == ($num_crosses - 1))) {
+          $num_crosses--;
+        }
       }
+      else { // This is a brand new select box, so make the default value empty.
+        $cross_to_default = 0;
+      }
+
+      // Create the select box
       $form['parents'][$pnum]['cross_to'][] = array(
         '#type' => 'select',
         '#options' => $parent_options,
-        '#default_value' => $cross_to_default,
+        '#default_value' => $parent_options[$cross_to_default],
         '#ajax' => array(
           'callback' => 'ajax_parents_cross_to_callback',
           'wrapper' => $cross_to_wrapper,
         ),
       );
     }
-
   }
 
-  // Implement ajax to add a new row to the parents table without losing any
-  // information that has already been entered.
+  // Some ajax has been commented out that was meant to add a new row to the
+  // parents table without losing any information that has already been entered.
+  // This is currently being done with a form rebuild instead.
   $form['parents']['add-row'] = array(
     '#type' => 'submit',
     '#value' => 'Add Parent',
@@ -268,26 +325,59 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
 }
 
 /**
-  * MOCK-UP Form validation for breeders to set crosses
-  *
-  *
-  *
+  * Form validation for breeders to set crosses.
+  * Ensures a cross cannot occur with itself, nor can 2+ identical crosses occur
+  * BUG: Since this code compares indices rather than values, it does not work properly
+  *      when a breeder changes a P num manually. ALSO SEE: cross_manage_crossingblock_set_cross_f1s_form_validate
+  * @TODO: Compare values rather than indices
   */
 function cross_manage_crossingblock_set_cross_parents_form_validate($form, &$form_state) {
 
-//dpm($form, 'form in validate');
-//dpm($form_state, 'form state in validate');
+  // Validate each row in the same manner.
+  foreach ($form_state['values']['parents'] as $pnum => $row) {
 
-  if ($form_state['triggering_element']['#type'] == 'select') {
-    foreach ($form_state['values']['parents'] as $pnum => $elements) {
-      $form_state['values']['parents'][$pnum]['cross_to'] = array_filter($elements['cross_to']);
+    // Ensure that the line entered is valid.
+    // Note that this shouldn't be empty because it's marked required
+    // but we are checking anyway since a database query is involved
+    // and we all know there are sometimes #DrupalWTF moments ;).
+    if (!empty($form_state['values']['parents'][$pnum]['line'])) {
+
+      // @TODO: Allow uniquename, name, synonym, dbxref.
+      $results = chado_select_record('stock', array('stock_id', 'uniquename'), array('uniquename' => $form_state['values']['parents'][$pnum]['line']));
+      if (empty($results)) {
+        form_set_error("parents][$pnum][line", "No Germplasm exists with that unique name.");
+      }
+      $form_state['values']['parents'][$pnum]['stock_id'] = $results[0]->stock_id;
     }
+
+    // Validate the "Cross To" elements.
+    if (isset($form_state['values']['parents'][$pnum]['cross_to'])) {
+      // Check each selection to compare to the pnum, then to other selections
+      foreach ($form_state['values']['parents'][$pnum]['cross_to'] as $k1 => $cross_to_num) {
+        // If a selected cross-to matches the pnum, throw an error
+        if ($pnum == $cross_to_num) {
+          form_set_error('parents][' . $pnum . '][cross_to][' . $k1, 'Invalid cross: P' . $pnum . ' to P' . $pnum);
+        }
+        else {
+          // If a selected cross-to is not empty, and is the same as a previously selected cross-to for that
+          // pnum, throw an error.
+          foreach ($form_state['values']['parents'][$pnum]['cross_to'] as $k2 => $cross_option) {
+            if (!empty($form_state['values']['parents'][$pnum]['cross_to'][$k2]) AND ($cross_to_num == $cross_option) AND ($k1 != $k2)) {
+              form_set_error('parents][' . $pnum . '][cross_to][' . $k2, 'Duplicate cross: P' . $pnum . ' to P' . $cross_to_num);
+              //break 2; //breaking prevents two error messages from being seen but also highlights a single box from the duplicates
+            }
+          }
+        }
+      }
+    }
+
+
   }
 }
 
 /**
- * MOCK-UP: Form allowing breeders to set the crosses to be made
- * for a given crossing block.
+ * Form submission for breeders to either submit the crossing block in its current state
+ * or add another row for a new parent.
  *
  * Implements hook_form_submit().
  */
@@ -300,16 +390,31 @@ function cross_manage_crossingblock_set_cross_parents_form_submit(&$form, &$form
     break;
     case 'Add Parent':
       $form_state['rebuild'] = TRUE;
+      dpm($form_state, 'Submit: Form State');
+
+      // Add as a parent
+      $record = array(
+        'stock_id' => $form_state['values']['parents'][1]['stock_id'],
+        'cb_year' => $form_state['build_info']['args'][1],
+        'cb_season' => $form_state['build_info']['args'][2],
+        'seed_source' => $form_state['values']['parents'][1]['source']
+      );
+      drupal_write_record('cross_manage_parents', $record);
     break;
   }
 }
 
-
+/**
 function ajax_parents_add_row_callback($form, $form_state) {
   return $form['parents'];
 }
+*/
 
-
+/**
+ * Callback for ajax-enabled select boxes
+ * Retrieves the pnum from the row that was "triggered" and returns the cross-to section
+ * of the form for that row.
+ */
 function ajax_parents_cross_to_callback($form, $form_state) {
   $pnum = $form_state['triggering_element']['#array_parents'][1];
   return $form['parents'][$pnum]['cross_to'];
@@ -320,33 +425,99 @@ function ajax_parents_cross_to_callback($form, $form_state) {
  * Form: Plan Crosses: F1's
  *
  * Form allowing breeders to indicate which germplasm should be crossed to the
- * F1's resulting from the previous crossing block. The ability to provide
- * additional instructions including which F1s to grow-out is also available.
+ * F1s resulting from the previous crossing block. The ability to provide
+ * additional instructions, such as seed designated for grow-outs and crosses,
+ * is also available.
  */
 function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
 
-//dpm($form_state, 'form_state');
+  // Get the year/season for the PREVIOUS corssing block since that's
+  // where the record for the F1's would be.
+  // NOTE: To determine previous crossing block, we need to choose the previous
+  // season and if the current season is spring then choose winter of the
+  // previous year.
+  $seasons = array('Spring', 'Summer', 'Fall', 'Winter');
+  $curr_season_key = array_search($form_state['build_info']['args'][2], $seasons);
+  if ($curr_season_key > 0) {
+    $prev_cb_season = $seasons[$curr_season_key - 1];
+    $prev_cb_year = $form_state['build_info']['args'][1];
+  } else {
+    $prev_cb_season = 'Winter';
+    $prev_cb_year = $form_state['build_info']['args'][1] - 1;
+  }
 
-  // My Hardcoded F1 data for the example.
-  // @TODO: Select this data from chado for the crossing block previous to the current one.
-  $mock = array(
-    '2604S' => array('2604S','SX','NY5-161 White/Jetwhite4-11-21','20',array('2605S','P6','P7')),
-    '2605S' => array('2605S','SX','NY5-161 White/WC-BC1-1','21',array('2604S')),
-    '2606S' => array('2606S','SX','NY5-161 Brown/Jetblack4-15-3','22',array('2608S','P4')),
-    '2607aS' => array('2607aS','SX','NY5-161 Brown/WC-BC1-1','23',array('P5')),
-    '2608S' => array('2608S','SX','G9345/Jetblack4-11-11','24',array()),
-    '2610bS' => array('2610bS','SX','1533a-15/Higuera-E','25',array()),
-    '2613bS' => array('2613bS','SX','GDR6aa/737-22','26',array('P12','P13','P15','P17')),
-    '2615S' => array('2615S','SX','316-13/Jetwhite4-11-21','27',array('P31')),
-    '2616S' => array('2616S','SX','1441-8/Jetwhite4-11-21','28',array('P4')),
-    '2617S' => array('2617S','SX','Expresso-5/Jetwhite4-11-21','29',array('P5')),
-    '2618S' => array('2618S','SX','1780TF3-1/Jetwhite4-11-21','30',array('P6','P7')),
-    '2619S' => array('2619S','SX','GDR32a-2/Jetwhite4-11-21','25',array('P12','P13')),
-    '2620bS' => array('2620bS','SX','316-13/Jetblack4-15-3','26',array('P31')),
-    '2621S' => array('2621S','SX','1441-8/Jetblack4-15-3','27',array('2622S')),
-    '2622S' => array('2622S','SX','Expresso-5/Jetblack4-15-3','28',array('P4','P5'))
+  // The following query pulls all F1s from the PREVIOUS crossing block.
+  // NOTE: Where this becomes difficult is that the breeders don't put
+  // in a crossing block every querter so if the query below returns 0 then
+  // you need to grab for those for 2 crossing blocks ago.
+  $f1s = chado_query("
+    SELECT
+      s.*,
+      org.genus,
+      org.species,
+      type.name as type_name,
+      mats.name||'/'||pats.name as pedigree,
+      num_seeds.value as num_seeds
+    FROM {stock} s
+    LEFT JOIN {stockprop} cby ON s.stock_id=cby.stock_id AND cby.type_id=:cb_year_id
+    LEFT JOIN {stockprop} cbs ON s.stock_id=cbs.stock_id AND cbs.type_id=:cb_season_id
+    LEFT JOIN {organism} org ON org.organism_id=s.organism_id
+    LEFT JOIN {cvterm} type ON type.cvterm_id=s.type_id
+    LEFT JOIN {stock_relationship} mat ON mat.object_id=s.stock_id AND mat.type_id=:mat_type_id
+    LEFT JOIN {stock} mats ON mats.stock_id=mat.subject_id
+    LEFT JOIN {stock_relationship} pat ON pat.object_id=s.stock_id AND pat.type_id=:pat_type_id
+    LEFT JOIN {stock} pats ON pats.stock_id=pat.subject_id
+    LEFT JOIN {stockprop} num_seeds ON num_seeds.stock_id=s.stock_id AND num_seeds.type_id=:seeds_type_id
+    WHERE cby.value=:cb_year AND cbs.value=:cb_season AND org.genus=:genus
+    ORDER BY s.name ASC",
+    array(
+      'mat_type_id' => '3632',
+      'pat_type_id' => '3633',
+      'seeds_type_id' => '3973',
+      'cb_year_id' => '3663',
+      'cb_season_id' => '3664',
+      'genus' => $form_state['build_info']['args'][0],
+      'cb_year' => $prev_cb_year,
+      'cb_season' => $prev_cb_season,
+    )
+  )->fetchAll();
+
+  // Set Page Title
+  $species = str_replace('-',' ',$form_state['build_info']['args'][0]);
+  $cb_year = $form_state['build_info']['args'][1];
+  $cb_season = $form_state['build_info']['args'][2];
+  drupal_set_title(format_string('Plan Crosses with F1s from: @species, @season @year Crossing Block', array(
+      '@species' => $species,
+      '@year' => $cb_year,
+      '@season' => $cb_season,
+  )));
+
+  // Add Joyride Site Tour
+  //--------------------------
+  //$form['#attached']['libraries_load'][] = array('joyride');
+
+  // Add Shepherd Site Tour
+  //--------------------------
+  $crossmanage_path = drupal_get_path('module', 'cross_manage');
+  $shepherd_path = libraries_get_path('shepherd');
+  $form['#attached']['js'][] = $shepherd_path . '/shepherd.min.js';
+  $form['#attached']['js'][] = $crossmanage_path . '/theme/js/CrossManage_F1form_ShepherdTour.js';
+  $form['#attached']['css'][] = $shepherd_path .'/css/shepherd-theme-arrows.css';
+  $form['#attached']['css'][] = array(
+    'data' => $crossmanage_path . '/theme/css/crossmanage_shepherd_tour.css',
+    'weight' => 10
   );
 
+  // Add site tour link.
+  //--------------------------
+  $form['start_tour'] = array(
+    '#type' => 'markup',
+    '#markup' => theme('cross_manage_shepherd_start_tour_link')
+  );
+
+  // css which allows form item titles to float left of the text box to save space,
+  // as well as for text boxes within the same item to align
+  // ie: seed allocation fields
   $form['#attached']['css'][] = array(
     'type' => 'inline',
     'data' => '
@@ -362,14 +533,30 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
         display:inline;
         width:auto;
       }
+      td.type, th.type {
+        width: 100px;
+      }
+      td.seed_num, th.seed_num {
+        width: 90px;
+        text-align: center;
+      }
+      td.seed_num .form-item.form-type-textfield {
+        text-align: center;
+      }
+      td.seed_allocate, th.seed_allocate {
+        width: 100px;
+      }
     '
   );
 
-  // My Hardcoded Parents for the example.
-  // These parents were added for this crossing block using the parents form
-  // defined in cross_manage_crossingblock_set_cross_parents_form().
-  // @TODO: Select these from the chado stock table.
-  $parent_options = array('', '2604S', '2608S', '2622S', 'P4','P5','P6','P7','P12','P13','P15','P17','P31');
+  // PARENT OPTIONS
+  // Currently includes all F1s
+  // @TODO: Also should be able to select crosses resulting from the parents form?
+  //        To pnum or not to pnum here?
+  $parent_options = array('');
+  foreach ($f1s as $k => $details) {
+    $parent_options[] = $details->name;
+  }
   $parent_options = array_combine($parent_options, $parent_options);
 
   $form['f1'] = array(
@@ -385,31 +572,43 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
   // allowing breeders to specify instructions per F1.
   // NOTE: titles are commented out to make things easier in the theme function
   // where these plain form fields will be rendered in a table layout.
-  foreach ($mock as $cross_num => $details) {
+  foreach ($f1s as $cross_num => $details) {
+
     $form['f1'][$cross_num]['cross_num'] = array(
       '#type' => 'item',
       //'#title' => 'Cross Number',
-      '#markup' => $details[0],
+      '#markup' => $details->name,
     );
 
     $form['f1'][$cross_num]['type'] = array(
       '#type' => 'item',
       //'#title' => 'Type',
-      '#markup' => $details[1]
+      '#markup' => $details->type_name,
     );
 
     $form['f1'][$cross_num]['pedigree'] = array(
       '#type' => 'item',
       //'#title' => 'Pedigree',
-      '#markup' => $details[2],
+      '#markup' => $details->pedigree,
     );
 
-   // The 1st way to represent number of seeds for 1) crossing block, 2) reserve, 3) grow-out.
-    $form['f1'][$cross_num]['seed_num'] = array(
-      '#type' => 'item',
-      //'#title' => 'Total Seed Count',
-      '#markup' => $details[3],
-    );
+    // Check to see if we know the number of seeds produced from the previous crossing block
+    // for this F1. If not, display a textbox to allow breeders to enter seed amount if they
+    // know it (ie. OPTIONAL).
+    if(isset($details->num_seeds)) {
+      $form['f1'][$cross_num]['seed_num'] = array(
+        '#type' => 'item',
+        //'#title' => 'Total Seed Produced',
+        '#markup' => $details->num_seeds,
+      );
+    }
+    else {
+      $form['f1'][$cross_num]['seed_num'] = array(
+        '#type' => 'textfield',
+        '#attributes' => array('placeholder' => 'Unknown'),
+        '#size' => '7',
+      );
+    }
 
     $form['f1'][$cross_num]['seed_allocate']['cross'] = array(
       '#type' => 'textfield',
@@ -429,40 +628,11 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
       '#size' => 3,
     );
 
-/**
-   // The 2nd way to represent number of seeds for 1) crossing block, 2) reserve, 3) grow-out.
-    $form['f1'][$cross_num]['seed_num'] = array(
-      '#type' => 'item',
-      //'#title' => 'Total Seed Count',
-      '#markup' => $details[3],
-    );
-
-    $form['f1'][$cross_num]['seed2cross'] = array(
-      '#type' => 'textfield',
-      //'#title' => 'Seed to Cross',
-      '#size' => 3,
-      '#default_value' => $details[3],
-    );
-
-    $form['f1'][$cross_num]['seed2reserve'] = array(
-      '#type' => 'textfield',
-      //'#title' => 'Seed to Reserve',
-      '#size' => 3,
-      '#default_value' => '0',
-    );
-
-    $form['f1'][$cross_num]['seed2growout'] = array(
-      '#type' => 'textfield',
-      //'#title' => 'Seed to Grow-out',
-      '#size' => 3,
-      '#default_value' => '0',
-    );
-*/
-
-    // Add the ability to select markers to screen for each F1. Clicking on '+' would
-    // bring up a popup window to allow breeders to browse/select markers.
-    // @TODO: Implement marker selection
-    /**
+    /** MARKERS
+     * Add the ability to select markers to screen for each F1. Clicking on '+' would
+     * bring up a popup window to allow breeders to browse/select markers.
+     * @TODO: Implement marker selection
+    /*
     $form['f1'][$cross_num]['marker_data']['markers2screen'] = array(
       '#type' => 'markup',
       //'#title' => 'Markers to Screen Already Selected',
@@ -475,23 +645,17 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
 
     $form['f1'][$cross_num]['notes']['breeder_notes'] = array(
       '#type' => 'textarea',
-      '#default_value' => 'Breeder Notes',
+      '#attributes' => array('placeholder' => 'Breeder Notes'),
       '#rows' => 1
     );
 
     $form['f1'][$cross_num]['notes']['instructions'] = array(
       '#type' => 'textarea',
-      '#default_value' => 'Instructions',
+      '#attributes' => array('placeholder' => 'Instructions'),
       '#rows' => 1
     );
 
-    // Not an ideal way for breeders to specify reserve seed for grow-outs
-//     $form['f1'][$cross_num]['notes']['grow_out'] = array(
-//       '#type' => 'checkbox',
-//       '#title' => 'Grow-out?',
-//       '#default_value' => TRUE,
-//     );
-
+    // Set up a wrapper to allow ajax to replace this item
     $cross_to_wrapper = 'cross-to-' . $cross_num;
     $form['f1'][$cross_num]['cross_to'] = array(
       '#type' => 'item',
@@ -503,59 +667,101 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
     // Add a number of cross to dropdowns to allow breeders to specify what
     // parents they want to cross with the current F1
     // NOTE: Ajax is used to ensure that there is always one more select box
-    // than there are parents selected to ensure that breeders can add more parents.
-    // @TODO: Implement ajax.
-    $existing_cross_to = (!empty($form_state['values']['f1'][$cross_num]['cross_to'])) ? $form_state['values']['f1'][$cross_num]['cross_to'] : array();
+    // than there are parents selected so that breeders can add more parents.
 
-    foreach ($existing_cross_to as $cross_to_default) {
-      //if (!empty($cross_to_default)) {
-        // Single select box with default set to value from form_state.
-        $form['f1'][$cross_num]['cross_to'][] = array(
-          '#type' => 'select',
-          '#options' => $parent_options,
-          '#default_value' => $cross_to_default,
-          '#ajax' => array(
-            'callback' => 'ajax_f1_cross_to_callback',
-            'wrapper' => $cross_to_wrapper,
-          ),
-        );
-      //}
+    // Determine how many select boxes we need.
+    $num_crosses = (!empty($form_state['values']['f1'][$cross_num]['cross_to'])) ? sizeof($form_state['values']['f1'][$cross_num]['cross_to']) : 0;
+    /*
+    // Ensure that the triggering element is limited to a select box from within the row,
+    // and if so, increment the number of crosses
+    if (isset($form_state['triggering_element'])
+      AND isset($form_state['triggering_element']['#id'])
+      AND preg_match('/^edit-f1-' . $i . '/', $form_state['triggering_element']['#id']))
+    {
+      $num_crosses++;
     }
+    */
+    for ($j = 0; $j <= $num_crosses; $j++) {
+      // Determine our default value for the next select box.
+      if (isset($form_state['values']['f1'][$cross_num]['cross_to'][$j])) {
+        // Default value is what has been previously entered
+        $cross_to_default = $form_state['values']['f1'][$cross_num]['cross_to'][$j];
+        // If the final box is already empty, don't iterate through the loop a final time
+        // Otherwise, another empty box would be added.
+        if (empty($form_state['values']['f1'][$cross_num]['cross_to'][$j]) AND ($j == ($num_crosses - 1))) {
+          $num_crosses--;
+        }
+      }
+      else { // This is a brand new select box, so make the default value empty.
+        $cross_to_default = '';
+      }
 
-    // Then create an additional select to allow them to add a new cross.
-    $form['f1'][$cross_num]['cross_to'][] = array(
-      '#type' => 'select',
-      '#options' => $parent_options,
-      '#ajax' => array(
-        'callback' => 'ajax_f1_cross_to_callback',
-        'wrapper' => $cross_to_wrapper,
-      ),
-    );
-
-    $form['submit-f1'] = array(
-      '#type' => 'submit',
-      '#value' => 'Send to Field Lab',
-    );
-
+      // Then create a select box for each previously specified cross + one blank
+      $form['f1'][$cross_num]['cross_to'][] = array(
+        '#type' => 'select',
+        '#options' => $parent_options,
+        '#default_value' => $parent_options[$cross_to_default],
+        '#ajax' => array(
+          'callback' => 'ajax_f1_cross_to_callback',
+          'wrapper' => $cross_to_wrapper,
+        ),
+      );
+    }
   }
+
+  // Should type here be button?
+  $form['save-f1'] = array(
+    '#type' => 'submit',
+    '#value' => 'Save Progress',
+  );
+
+  $form['submit-f1'] = array(
+    '#type' => 'submit',
+    '#value' => 'Send to Field Lab',
+  );
+
+/**
+  $form['joyride'] = array(
+    '#type' => 'markup',
+    '#markup' => theme('cross_manage_crossingblock_f1_joyride')
+  );
+*/
+
   return $form;
 }
 
 /**
- * MOCK-UP Form allowing breeders to set the crosses to be made
- * for a given crossing block.
- *
- * Implements hook_form_submit().
+ * Form validation for breeders to set crosses with F1s.
+ * Ensures a cross cannot occur with itself, nor can 2+ identical crosses occur
+ * BUG: Does not work as expected despite being the same code as for the Parents form
+ * @TODO: Compare values rather than indices
  */
 function cross_manage_crossingblock_set_cross_f1s_form_validate($form, &$form_state) {
   foreach ($form_state['values']['f1'] as $cross_num => $elements) {
-    $form_state['values']['f1'][$cross_num]['cross_to'] = array_filter($elements['cross_to']);
+    if (isset($form_state['values']['f1'][$cross_num]['cross_to'])) {
+      // Check each selection to compare to the cross_num, then to other selections
+      foreach ($form_state['values']['f1'][$cross_num]['cross_to'] as $k1 => $cross_to_num) {
+        // If a selected cross-to matches the cross number, throw an error
+        if ($cross_num == $cross_to_num) {
+          form_set_error('f1][' . $cross_num . '][cross_to][' . $k1, 'Invalid cross: ' . $cross_num . ' to ' . $cross_num);
+        }
+        else {
+          // If a selected cross-to is not empty, and is the same as a previously selected cross-to for that
+          // cross number, throw an error.
+          foreach ($form_state['values']['f1'][$cross_num]['cross_to'] as $k2 => $cross_option) {
+            if (!empty($form_state['values']['f1'][$cross_num]['cross_to'][$k2]) AND ($cross_to_num == $cross_option) AND ($k1 != $k2)) {
+              form_set_error('f1][' . $cross_num . '][cross_to][' . $k2, 'Duplicate cross: ' . $cross_num . ' to ' . $cross_to_num);
+              //break 2; //breaking prevents two error messages from being seen but also highlights a single box from the duplicates
+            }
+          }
+        }
+      }
+    }
   }
 }
 
 /**
- * MOCK-UP Form allowing breeders to set the crosses to be made
- * for a given crossing block.
+ * Form submission for breeders to submit F1 crosses to field lab.
  *
  * Implements hook_form_submit().
  */
@@ -563,6 +769,11 @@ function cross_manage_crossingblock_set_cross_f1s_form_submit($form, $form_state
   drupal_set_message('Successfully submitted F1s form to Field Lab');
 }
 
+/**
+ * Callback for ajax-enabled select boxes
+ * Retrieves the cross_num from the row that was "triggered" and returns the cross-to section
+ * of the form for that row.
+ */
 function ajax_f1_cross_to_callback($form, $form_state) {
   $cross_num = $form_state['triggering_element']['#array_parents'][1];
   return $form['f1'][$cross_num]['cross_to'];

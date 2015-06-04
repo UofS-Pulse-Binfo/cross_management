@@ -6,6 +6,37 @@
  */
 
 /**
+ *
+ */
+function theme_cross_manage_shepherd_start_tour_link() {
+
+  $textual_link = l(
+      'Start Walk-through',
+      '',
+      array(
+        'fragment' => 'cross_manage_crossingblock_f1_form top',
+        'attributes' => array('class' => array('tour-start-link', 'tour-textual-link'))
+      )
+    );
+  $image = theme('image', array(
+    'path' => drupal_get_path('module', 'cross_manage') . '/theme/images/question-mark-button-green.png',
+    'alt' => 'Start Walk-through',
+    'title' => 'Start Walk-through'
+  ));
+  $image_link = l(
+    $image,
+    '',
+    array(
+      'fragment' => 'cross_manage_crossingblock_f1_form top',
+      'attributes' => array('class' => array('tour-start-link', 'tour-image-link')),
+      'html' => TRUE
+    )
+  );
+
+  return $image_link . $textual_link;
+}
+
+/**
  * Proprocessor: cross_manage_workflow.tpl.php
  */
 function cross_manage_preprocess_cross_manage_workflow(&$vars) {
@@ -102,11 +133,8 @@ function theme_cross_manage_crossingblock_f1($vars) {
     'cross_num' => array('data' => 'Cross Number', 'class' => 'cross_num'),
     'type' => array('data' => 'Type', 'class' => 'type'),
     'pedigree' => array('data' => 'Pedigree', 'class' => 'pedigree'),
-    'seed_num' => array('data' => 'Seed Count', 'class' => 'seed_num'),
+    'seed_num' => array('data' => 'Seed Produced', 'class' => 'seed_num'),
     'seed_allocate' => array('data' => 'Seed Allocation', 'class' => 'seed_allocate'),
-    //'seed2cross' => array('data' => 'Seed to Cross', 'class' => 'seed2cross'),
-    //'seed2reserve' => array('data' => 'Seed to Reserve', 'class' => 'seed2reserve'),
-    //'seed2growout' => array('data' => 'Seed to Grow-out', 'class' => 'seed2growout'),
     // @TODO: Include marker data/selection
     //'marker_data' => array('data' => 'Markers', 'class' => 'markers'),
     'notes' => array('data' => 'Notes', 'class' => 'notes'),
@@ -114,6 +142,7 @@ function theme_cross_manage_crossingblock_f1($vars) {
   );
 
   $rows = array();
+
   foreach (element_children($element) as $key) {
       $row = array();
       $row['data'] = array();
@@ -121,6 +150,7 @@ function theme_cross_manage_crossingblock_f1($vars) {
         $cell = array(
           'data' => drupal_render($element[$key][$fieldname]),
           'class' => array('cross-parents', 'parent-cell', $fieldname),
+          'id' => 'f1-row' . $key . '-'. $fieldname
         );
 
         $row['data'][] = $cell;
