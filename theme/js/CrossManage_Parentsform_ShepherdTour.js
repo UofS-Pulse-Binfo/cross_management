@@ -66,7 +66,7 @@
       //-----------------------------------------
       tour.addStep({
           text: 'Each parent requires a parent number (or P-number): this box is automatically filled each time a new parent is added (incremented by 1), but can also be changed manually.',
-          attachTo: '#edit-parents-1-pnum right',
+          attachTo: '.first.cross-parents-row .pnum.parent-cell right',
           buttons: myButtons
       });
 
@@ -74,7 +74,7 @@
       //-----------------------------------------
       tour.addStep({
           text: '<p>Designate which line will be a parent. This line must already be entered into KnowPulse.</p>',
-          attachTo: '#edit-parents-1-line right',
+          attachTo: '.first.cross-parents-row .line.parent-cell right',
           buttons: myButtons
       });
 
@@ -83,7 +83,7 @@
       tour.addStep({
           title: 'Seed Source',
           text: '<p>Here is where you indicate seed source for planting of this parent. For example, you may specify to use Breeder\'s seed or seed from a particular plot.</p>',
-          attachTo: '#edit-parents-1-source right',
+          attachTo: '.first.cross-parents-row .source.parent-cell right',
           buttons: myButtons
       });
 
@@ -92,7 +92,7 @@
       tour.addStep({
           title: 'Notes & Instructions',
           text: '<p>You can enter random notes to yourself in the "Breeder\'s Notes" and any specific instructions or notes to the field lab should be entered in the "Instructions" section.</p>',
-          attachTo: '#edit-parents-1-notes-breeder-notes top',
+          attachTo: '.first.cross-parents-row .notes.parent-cell top',
           buttons: myButtons
       });
 
@@ -101,7 +101,7 @@
       tour.addStep({
           title: 'Crosses to be Made',
           text: '<p>This is where you indicate what germplasm you would like to cross with the current parent. Each dropdown represents a unique cross combination and can be any of the parents you previously added in this form.</p> <p>NOTE: The current parent will be the maternal parent and the germplasm chosen to be crossed with it will be the paternal parent.</p>',
-          attachTo: '#edit-parents-1-cross-to left',
+          attachTo: '.first.cross-parents-row .cross_to.parent-cell left',
           buttons: [
             {
               text: 'Back',
