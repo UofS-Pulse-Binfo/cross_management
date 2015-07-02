@@ -24,10 +24,22 @@ function cross_manage_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'parent_number' => array(
+        'description' => 'The number for the parent (ie: if the parent would be P1 is the spreadsheet system it will be 1 here..',
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => TRUE,
+      ),
       'stock_id' => array(
         'description' => 'The chado stock describing this parent.',
         'type' => 'int',
         'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'cb_species' => array(
+        'description' => 'The crossing block species.',
+        'type' => 'varchar',
+        'length' => 30,
         'not null' => TRUE,
       ),
       'cb_year' => array(

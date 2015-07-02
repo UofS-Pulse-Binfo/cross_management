@@ -84,22 +84,28 @@ function cross_manage_preprocess_cross_manage_workflow(&$vars) {
 function theme_cross_manage_crossingblock_parents($vars) {
   $element = $vars['element'];
 
-  $header = array(
-    'pnum' => array('data' => 'Parent Number', 'class' => 'pnum'),
-    'line' => array('data' => 'Line', 'class' => 'line'),
-    'source' => array('data' => 'Source', 'class' => 'source'),
+  $header1 = array(
+    'mat' => array('data' => 'Maternal Parent', 'colspan' => 3, 'style' => 'text-align:center', 'class' => 'header-category'),
+    'pat' => array('data' => 'Paternal Parent', 'class' => 'header-category'),
+    'notes' => array('data' => '', 'class' => 'notes'),
+  );
+  $header2 = array(
+    'pnum' => array('data' => 'Parent Number', 'class' => 'pnum', 'header' => TRUE),
+    'line' => array('data' => 'Line', 'class' => 'line', 'header' => TRUE),
+    'source' => array('data' => 'Source', 'class' => 'source', 'header' => TRUE),
     // @TODO: Include marker data/selection
-    //'marker_data' => array('data' => 'Markers', 'class' => 'marker_data'),
-    'notes' => array('data' => 'Notes', 'class' => 'notes'),
-    'cross_to' => array('data' => 'Cross To', 'class' => 'cross_to'),
+    //'marker_data' => array('data' => 'Markers', 'class' => 'marker_data', 'header' => TRUE),
+    'cross_to' => array('data' => 'Cross To', 'class' => 'cross_to', 'header' => TRUE),
+    'notes' => array('data' => 'Notes', 'class' => 'notes', 'header' => TRUE),
   );
 
   $rows = array();
+  $rows[] = $header2;
   foreach (element_children($element) as $key) {
     if (preg_match('/^[0-9]+$/',$key)) {
       $row = array();
       $row['data'] = array();
-      foreach ($header as $fieldname => $title) {
+      foreach ($header2 as $fieldname => $title) {
         $cell = array(
           'data' => drupal_render($element[$key][$fieldname]),
           'class' => array('cross-parents', 'parent-cell', $fieldname),
@@ -107,6 +113,9 @@ function theme_cross_manage_crossingblock_parents($vars) {
 
         $row['data'][] = $cell;
         $row['class'] = array('cross-parents-row', 'draggable', $element[$key]['highlight_class']['#value']); // needed for table dragging
+        if (sizeof($rows) == 0) {
+          $row['class'][] = 'first';
+        }
       }
       $rows[] = $row;
     }
@@ -117,7 +126,7 @@ function theme_cross_manage_crossingblock_parents($vars) {
   $rows[$last_key]['class'][] = 'last';
 
   return theme('table', array(
-    'header' => $header,
+    'header' => $header1,
     'rows' => $rows,
     'attributes' => array('id' => 'cross_manage_crossingblock_parents_form'), // needed for table dragging
   )) . drupal_render($element['add-row']);

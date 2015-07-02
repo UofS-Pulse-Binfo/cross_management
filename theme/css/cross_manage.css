@@ -3,147 +3,76 @@
  * Themeing for the cross management forms
  */
 
-/**
- * Form: Plan Crosses
- *
-.cross-parents {
-  float: left;
-  padding: 0px 10px;
-}
-
-.cross-parents.row.instruct{
-  margin-top: 20px;
-  margin-bottom: 0;
-  padding-bottom: 5px;
-  border: none;
-}
-
-.cross-parents.row.header{
-  margin-top: 20px;
-  margin-bottom: 0;
-  font-weight: bold;
-}
-
-.cross-parents.row.header .column-2 {
-  display: table-cell;
-  vertical-align: bottom;
-}
-
-.cross-parents.row {
-  clear: both;
-  width: 95%;
-  border-bottom: 1px solid #CCCCCC;
-}
-
-.cross-parents.row.last {
-  border: none;
-}
-
-/* Set up the columns
-.cross-parents.column-1 {
-  width: 60px;
-}
-.cross-parents.column-2 {
-  width: 25%;
-  min-width: 150px;
-}
-.cross-parents.column-3 {
-  width: 25%;
-  min-width: 150px;
-}
-.cross-parents.column-4 {
-  width: 25%;
-  min-width: 150px;
-}
-.cross-parents.column-indented-full {
-  clear: both;
-  width: 80%;
-  margin-left: 75px;
-}
-
-/* Theme form elements
-.cross-parents input.form-text {
-  width: 90%
-}
-
-span.cross-parents.display-options {
-  width: 100%;
-}
-.cross-parents.display-options .form-checkboxes .form-item{
-  width: 33%;
-  float: left;
-}
-
-.cross-parents.line-valid input.form-text {
-  border-color: green;
-}
-.cross-parents.line-invalid input.form-text {
-  border-color: red;
-}
-
-.cross-parents.column-4 .form-item.form-type-select {
-  float: left;
-}
-
-.cross-parents.row fieldset legend {
-  background-color: #CCCCCC;
-}
-
-.cross-parents.row fieldset legend a.fieldset-title {
-  color: #3b3b3b;
-}
-* */
-
-
 .cross-parents.add-more {
   float: right;
 }
 
-/** Parent Table */
-table#tripal_germplasm_crossingblock_parents_form th {
-  background-color: #E2E5E6;
-  color: black;
+/**
+ * Plan Crosses: Parents Form
+ */
+
+/* -- Clear all borders */
+table#cross_manage_crossingblock_parents_form tr th, table#cross_manage_crossingblock_parents_form tr td {
+  border-color: transparent;
+  border-bottom-color: transparent;
+  border-top-color: transparent;
+  border-right-color: transparent;
+  border-left-color: transparent;
 }
 
-th.cross-parents.parent-cell, td.cross-parents.parent-cell {
-  height: 41px;
-  padding: 0px 4px 4px 4px;
+/* -- Differentiate category header (ie: maternal/paternal parent ) */
+table tr th.header-category{
+  background-color: #1F2A37;
 }
 
+/* -- Set column widths */
 th.pnum, td.pnum {
   width: 60px;
-  border-right: none;
 }
 th.line, td.line {
   width: 150px;
-  border-right: none;
-  border-left: none;
 }
 th.source, td.source {
   width: 150px;
-  border-right: none;
-  border-left: none;
-}
-th.marker_data, td.marker_data {
-  width: 100px;
-  border-right: none;
-  border-left: none;
-}
-td.cross-parents.parent-cell.marker_data {
-  padding: 4px 8px;
 }
 th.cross_to, td.cross_to {
-  border-left: none;
+  max-width: 350px;
+}
+
+/* -- Add in right borders between maternal/paternal/notes */
+/** Dark Header: #1F2A37; Medium Gray: #646C76; */
+table#cross_manage_crossingblock_parents_form  tr th.header-category,
+  table#cross_manage_crossingblock_parents_form  tr th.source,
+  table#cross_manage_crossingblock_parents_form  tr th.cross_to {
+
+    border-right: 1px solid #4C535C;
+}
+table#cross_manage_crossingblock_parents_form  tr td.source,
+  table#cross_manage_crossingblock_parents_form  tr td.cross_to {
+
+    border-right: 1px solid #EFEFEF;
+}
+
+/* -- Add in table border. */
+table#cross_manage_crossingblock_parents_form  tr td.pnum {
+  border-left: 1px solid #314355;
+}
+table#cross_manage_crossingblock_parents_form  tr th.notes,
+  table#cross_manage_crossingblock_parents_form  tr td.notes {
+  border-right: 1px solid #314355;
+}
+table#cross_manage_crossingblock_parents_form  tr.last td {
+  border-bottom: 1px solid #314355;
 }
 
 /** Highlighting of rows  */
 tr.cross-parents-row.Small-Red td, .highlight-key.Small-Red {
   background-color: #D4EAFF;
-  border-bottom: 1px solid #D4EAFF;
+  /*border-bottom: 1px solid #D4EAFF;*/
 }
 tr.cross-parents-row.French-Green td, .highlight-key.French-Green {
   background-color: #E1F8DA;
-  border-bottom: 1px solid #E1F8DA;
+  /*border-bottom: 1px solid #E1F8DA;*/
 }
 
 .cross-parents.highlight {
