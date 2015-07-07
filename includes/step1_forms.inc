@@ -51,17 +51,18 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
 
   // Add Themeing:
   //--------------------------
-  $path = drupal_get_path('module', 'cross_manage');
+  $crossmanage_path = drupal_get_path('module', 'cross_manage');
   $form['#attached'] = array(
     'css' => array(
       'type' => 'file',
-      'data' => $path . '/theme/css/cross_manage.css',
+      'data' => $crossmanage_path . '/theme/css/cross_manage.css',
     ),
   );
+  $form['#attached']['js'][] = $crossmanage_path . '/theme/js/CrossManage_highlightErrorRow.js';
+
 
   // Add Shepherd Site Tour
   //--------------------------
-  $crossmanage_path = drupal_get_path('module', 'cross_manage');
   $shepherd_path = libraries_get_path('shepherd');
   $form['#attached']['js'][] = $shepherd_path . '/shepherd.min.js';
   $form['#attached']['js'][] = $crossmanage_path . '/theme/js/CrossManage_Parentsform_ShepherdTour.js';
@@ -122,10 +123,14 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
   // Always pull the parents from the database since they should be saved on
   // addition of a parent. This is consistent and reliable.
   $parents = db_query("
-    SELECT p.*, s.name, s.uniquename, cs.nid
+    SELECT p.*, s.name, s.uniquename, cs.nid,
+      self.value as breeder_notes, instruct.value as instructions,
+      (SELECT array_agg(paternal_parent_id) FROM cross_manage_planned_crosses WHERE maternal_parent_id=p.cb_parent_id) as cross_to
     FROM {cross_manage_parents} p
     LEFT JOIN chado.stock s ON s.stock_id=p.stock_id
     LEFT JOIN {chado_stock} cs ON cs.stock_id = p.stock_id
+    LEFT JOIN {cross_manage_notes} self ON self.cb_parent_id=p.cb_parent_id AND self.type='breeder_selfnote'
+    LEFT JOIN {cross_manage_notes} instruct ON instruct.cb_parent_id=p.cb_parent_id AND instruct.type='fieldlab_instruction'
     WHERE cb_year=:year AND cb_season=:season AND cb_species=:species
     ORDER BY parent_number",
     array(':year' => $cb_year, ':season' => $cb_season, ':species' => $species))->fetchAll();
@@ -139,12 +144,14 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
   }
   asort($parent_options);
 
+
   // Use For loop to ensure we always get one more row than options.
-  // NOTE: We didn't use +1 on existing options b/c there is an add-row element
+  // We didn't use +1 on existing options b/c there is an add-row element
   // for the button which effectively adds our +1.
   // ASSUMPTION: You will not add any elements to $form['parents'] other than
   // the rows and the add parent button. If you do,
   // (ie: $form['parents']['another button']) you will get two empty rows.
+
   $max_pnum = 0;
   for ($i=1; $i < $num_rows; $i++) {
 
@@ -156,7 +163,17 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
       $pnum = ($has_form_state) ? $form_state['values']['parents'][$pid]['pnum'] : $parents[$i]->parent_number;
       $line = ($has_form_state) ? $form_state['values']['parents'][$pid]['line'] : $parents[$i]->name;
       $source = ($has_form_state) ? $form_state['values']['parents'][$pid]['source'] : $parents[$i]->seed_source;
-      $cross_to = ($has_form_state) ? $form_state['values']['parents'][$pid]['cross_to'] : array();
+      $breeder_notes = ($has_form_state) ? $form_state['values']['parents'][$pid]['notes']['breeder_notes'] : $parents[$i]->breeder_notes;
+      $instructions = ($has_form_state) ? $form_state['values']['parents'][$pid]['notes']['instructions'] : $parents[$i]->instructions;
+
+      $cross_to = array();
+      if (!empty($parents[$i]->cross_to)) {
+        if (!is_array($parents[$i]->cross_to)) {
+          $parents[$i]->cross_to = explode("," , trim($parents[$i]->cross_to, '{}'));
+        }
+        $cross_to = $parents[$i]->cross_to;
+      }
+      $cross_to = ($has_form_state AND $form_state['values']['parents'][$pid]['cross_to'][0] != 0) ? $form_state['values']['parents'][$pid]['cross_to'] : $cross_to;
 
       $details = 'Germplasm Page';
       if (isset($parents[$i]->nid)) {
@@ -233,16 +250,35 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
       '#type' => 'markup',
     );
 
+    // We want to expand the size of the textarea based on the number of lines
+    // up to a max of 3 lines. First we use a simple regex to count the number
+    // of user defined lines. However, a user could type a paragraph that spans
+    // multiple lines (not detected by regex) so we also use a character count
+    // if the number of lines is determined to be one or less.
+    $num_lines = preg_match_all('/(\r|\n|\<br\/\>|\<b\/\>|\<br \/\>)/', $breeder_notes);
+    $num_lines = ($num_lines <= 1) ? ceil(strlen($breeder_notes)/75) : $num_lines;
+    $length = ($num_lines >= 3) ? 3 : $num_lines;
+    $length = ($length == 0) ? 1 : $length;
+
     $form['parents'][$pid]['notes']['breeder_notes'] = array(
       '#type' => 'textarea',
       '#attributes' => array('placeholder' => 'Breeder Notes'),
-      '#rows' => 1,
+      '#rows' => $length,
+      '#default_value' => $breeder_notes,
     );
+
+    // Used the same logic as described for the number of rows for the
+    // Breeder's notes textarea above.
+    $num_lines = preg_match_all('/(\r|\n|\<br\/\>|\<b\/\>|\<br \/\>)/', $instructions);
+    $num_lines = ($num_lines <= 1) ? ceil(strlen($instructions)/75) : $num_lines;
+    $length = ($num_lines >= 3) ? 3 : $num_lines;
+    $length = ($length == 0) ? 1 : $length;
 
     $form['parents'][$pid]['notes']['instructions'] = array(
       '#type' => 'textarea',
       '#attributes' => array('placeholder' => 'Instructions'),
-      '#rows' => 1,
+      '#rows' => $length,
+      '#default_value' => $instructions,
     );
 
     $cross_to_wrapper = 'cross-to-' . $pid;
@@ -255,12 +291,12 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
 
     // Add a number of cross to dropdowns to allow breeders to specify what
     // parents they want to cross with the current line
-    // NOTE: Ajax is used to ensure that there is always one more select box
+    // Ajax is used to ensure that there is always one more select box
     // than there are parents selected so that breeders can add more parents
     // to cross with.
 
     // Determine how many select boxes we need.
-    // NOTE: We don't need to add one because we are using the 0-index where
+    // We don't need to add one because we are using the 0-index where
     // size starts at 1.
     $num_crosses = (!empty($cross_to)) ? sizeof($cross_to) : 0;
 
@@ -283,7 +319,7 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
       $form['parents'][$pid]['cross_to'][] = array(
         '#type' => 'select',
         '#options' => $parent_options,
-        '#default_value' => $parent_options[$cross_to_default],
+        '#default_value' => $cross_to_default, // @carolyn: Drupal was fixing broken code!
         '#ajax' => array(
           'callback' => 'ajax_parents_cross_to_callback',
           'wrapper' => $cross_to_wrapper,
@@ -300,11 +336,6 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
     '#value' => 'Add Parent',
     '#prefix' => '<span class="cross-parents add-more">',
     '#suffix' => '</span>',
-    /**
-    '#ajax' => array(
-      'callback' => 'ajax_parents_add_row_callback',
-      'wrapper' => $parents_wrapper,
-    ),*/
   );
 
   $form['submit-cb'] = array(
@@ -380,13 +411,31 @@ function cross_manage_crossingblock_set_cross_parents_form_validate($form, &$for
       // VALIDATE: Ensure the user hasn't crossed the parent to itself.
       $duplicate_field_id = array_search($pid, $form_state['values']['parents'][$pid]['cross_to']);
       if (is_numeric($duplicate_field_id)) {
-        $msg = t(
-          'You have indicated you want to cross :pname with itself (See :index paternal parent). Please explain further in the "Instructions" box to the right.',
-          array(
-            ':pname' => $form_state['values']['parents'][$pid]['line'],
-            ':index' => cross_manage_format_number_ordinal($duplicate_field_id + 1)
-          ));
-        drupal_set_message($msg, 'warning');
+
+        // We only want to show the warning on ajax if the triggering element
+        // is in the same row as the offending cross. The message becomes
+        // confusing if shown in the wrong row.
+        if (isset($form_state['triggering_element']['#ajax']) AND $form_state['triggering_element']['#parents'][1] == $pid) {
+          $msg = t(
+            'You have indicated you want to cross :pname with itself (See :index paternal parent). Please explain further in the "Instructions" box to the right.',
+            array(
+              ':pname' => $form_state['values']['parents'][$pid]['line'],
+              ':pnum' => $form_state['values']['parents'][$pid]['pnum'],
+              ':index' => cross_manage_format_number_ordinal($duplicate_field_id + 1)
+            ));
+          drupal_set_message($msg, 'warning');
+        }
+        // We always want to show it if a button was pressed.
+        elseif (isset($form_state['clicked_button'])) {
+          $msg = t(
+            'P:pnum: You have indicated you want to cross :pname with itself (See :index paternal parent). Please explain further in the associated "Instructions" box.',
+            array(
+              ':pname' => $form_state['values']['parents'][$pid]['line'],
+              ':pnum' => $form_state['values']['parents'][$pid]['pnum'],
+              ':index' => cross_manage_format_number_ordinal($duplicate_field_id + 1)
+            ));
+          drupal_set_message($msg, 'warning');
+        }
       }
 
       // VALIDATE: The user shouldn't make the sample cross 2X.
@@ -401,7 +450,7 @@ function cross_manage_crossingblock_set_cross_parents_form_validate($form, &$for
         // Search through the counts for any duplicated parent number. Since the
         // parent number is the key we can use array_keys to get a list of
         // duplicated parent numbers.
-        // NOTE: We use array_filter with a callback to ensure we catch instances
+        // We use array_filter with a callback to ensure we catch instances
         // where the user has selected the same parent 2+ times.
         $duplicated_pids = array_filter($cross_count, 'cross_manage_filter_keep_2plus', ARRAY_FILTER_USE_BOTH);
 
@@ -455,7 +504,7 @@ function cross_manage_crossingblock_set_cross_parents_form_validate($form, &$for
 
   // VALIDATE: Ensure that two parents don't have the same stock_id & source
   // as this would cause a db (PDO) error on insert/update.
-  // NOTE: We use the custom stocksource_count array generated above to keep track of
+  // We use the custom stocksource_count array generated above to keep track of
   // the number of each stock/source combination making it easy to check once,
   // down here, how many duplications are present. This cannot be done within
   // the loop because we would get multiple messages if the combination
@@ -480,32 +529,132 @@ function cross_manage_crossingblock_set_cross_parents_form_validate($form, &$for
  */
 function cross_manage_crossingblock_set_cross_parents_form_submit(&$form, &$form_state) {
 
-  switch ($form_state['clicked_button']['#value']) {
-    case 'Submit Crossing Plans':
-      $form_state['rebuild'] = FALSE;
-      drupal_set_message('Successfully submitted crossing plans');
-    break;
-    case 'Add Parent':
-      $form_state['rebuild'] = TRUE;
+  $form_state['rebuild'] = TRUE;
 
-      // Add as a parent
-      foreach (element_children($form_state['values']['parents']) as $pid) {
-        if (empty($form_state['values']['parents'][$pid]['cb_parent_id']) AND $pid != 'add-row') {
-          $record = array(
-            'stock_id' => $form_state['values']['parents'][$pid]['stock_id'],
-            'cb_year' => $form_state['build_info']['args'][1],
-            'cb_season' => $form_state['build_info']['args'][2],
-            'seed_source' => $form_state['values']['parents'][$pid]['source']
-          );
-          //drupal_write_record('cross_manage_parents', $record);
+  // Regardless we want to save all the changes.
+  foreach (element_children($form_state['values']['parents']) as $pid) {
+    if ($pid != 'add-row') {
 
-          // Set the id of the newly added parent.
-          //$form_state['values']['parents'][$pid]['cb_parent_id'] = $record['cb_parent_id'];
+      // Table: cross_manage_parents.
+      // Keeps track of basic details for each parent.
+      $parent_record = array(
+        'stock_id' => $form_state['values']['parents'][$pid]['stock_id'],
+        'cb_year' => $form_state['build_info']['args'][1],
+        'cb_season' => $form_state['build_info']['args'][2],
+        'seed_source' => $form_state['values']['parents'][$pid]['source']
+      );
 
+      // If there is no cb_parent_id then this is a new record.
+      if (empty($form_state['values']['parents'][$pid]['cb_parent_id'])) {
+        drupal_write_record('cross_manage_parents', $parent_record);
+
+        if (isset($parent_record['cb_parent_id'])) {
+          $form_state['values']['parents'][$pid]['cb_parent_id'] = $parent_record['cb_parent_id'];
+        }
+        else {
+          // ERROR: unable to save parent.
         }
       }
-    break;
+      else {
+        $parent_record['cb_parent_id'] = $form_state['values']['parents'][$pid]['cb_parent_id'];
+        drupal_write_record('cross_manage_parents', $parent_record, 'cb_parent_id');
+      }
+
+      if (isset($parent_record['cb_parent_id'])) {
+
+        // Table: cross_manage_planned_crosses.
+        // Keeps track of each cross planned. In other words stores each
+        // maternal/paternal parent cross specified in the "Cross To" drop-downs.
+        foreach ($form_state['values']['parents'][$pid]['cross_to'] as $pat_pid) {
+          $cross_record = array();
+
+          if ($pat_pid != 0) {
+            $cross_record = array(
+              'maternal_parent_id' => $parent_record['cb_parent_id'],
+              'paternal_parent_id' => $pat_pid
+            );
+
+            $exists = db_query('
+              SELECT cb_cross_id
+              FROM {cross_manage_planned_crosses}
+              WHERE maternal_parent_id=:mat AND paternal_parent_id=:pat',
+              array(
+                ':mat' => $cross_record['maternal_parent_id'],
+                ':pat' => $cross_record['paternal_parent_id']
+            ))->fetchField();
+            if ($exists) {
+              $cross_record['cb_cross_id'] = $exists;
+              drupal_write_record('cross_manage_planned_crosses', $cross_record, 'cb_cross_id');
+            }
+            else {
+              drupal_write_record('cross_manage_planned_crosses', $cross_record);
+            }
+          }
+        }
+
+        // Delete any removed planned crosses.
+        // Logic: Restricted to the maternal_parent_id, delete any crosses
+        // where the paternal parent is not in the cross_to list.
+        if (sizeof($form_state['values']['parents'][$pid]['cross_to']) > 1) {
+          db_query('DELETE FROM {cross_manage_planned_crosses} WHERE maternal_parent_id=:mat AND paternal_parent_id NOT IN (:pats)',
+              array(':mat' => $parent_record['cb_parent_id'], ':pats' => $form_state['values']['parents'][$pid]['cross_to']))->fetchAll();
+        }
+
+        // Table: cross_manage_notes.
+        // Keeps track of breeder's notes and instructions.
+        if (!empty($form_state['values']['parents'][$pid]['notes']['breeder_notes'])) {
+          $selfnote_record = array(
+            'cb_parent_id' => $parent_record['cb_parent_id'],
+            'type' => 'breeder_selfnote',
+            'value' => $form_state['values']['parents'][$pid]['notes']['breeder_notes']
+          );
+
+          $exists = db_query('
+            SELECT true
+            FROM {cross_manage_notes}
+            WHERE cb_parent_id=:pid AND type=:type',
+            array(
+              ':pid' => $pid,
+              ':type' => 'breeder_selfnote'
+          ))->fetchField();
+          if ($exists) {
+            drupal_write_record('cross_manage_notes', $selfnote_record, array('cb_parent_id','type'));
+          }
+          else {
+            drupal_write_record('cross_manage_notes', $selfnote_record);
+          }
+        }
+        if (!empty($form_state['values']['parents'][$pid]['notes']['instructions'])) {
+          $instruct_record = array(
+            'cb_parent_id' => $parent_record['cb_parent_id'],
+            'type' => 'fieldlab_instruction',
+            'value' => $form_state['values']['parents'][$pid]['notes']['instructions']
+          );
+
+          $exists = db_query('
+            SELECT true
+            FROM {cross_manage_notes}
+            WHERE cb_parent_id=:pid AND type=:type',
+            array(
+              ':pid' => $pid,
+              ':type' => 'fieldlab_instruction'
+          ))->fetchField();
+          if ($exists) {
+            drupal_write_record('cross_manage_notes', $instruct_record, array('cb_parent_id','type'));
+          }
+          else {
+            drupal_write_record('cross_manage_notes', $instruct_record);
+          }
+        }
+      }
+    }
   }
+
+  if ($form_state['clicked_button']['#value'] == 'Submit Crossing Plans') {
+    $form_state['rebuild'] = FALSE;
+    drupal_set_message('Successfully submitted crossing plans');
+  }
+
 }
 
 /**
@@ -537,7 +686,7 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
 
   // Get the year/season for the PREVIOUS corssing block since that's
   // where the record for the F1's would be.
-  // NOTE: To determine previous crossing block, we need to choose the previous
+  // To determine previous crossing block, we need to choose the previous
   // season and if the current season is spring then choose winter of the
   // previous year.
   $seasons = array('Spring', 'Summer', 'Fall', 'Winter');
@@ -551,7 +700,7 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
   }
 
   // The following query pulls all F1s from the PREVIOUS crossing block.
-  // NOTE: Where this becomes difficult is that the breeders don't put
+  // Where this becomes difficult is that the breeders don't put
   // in a crossing block every querter so if the query below returns 0 then
   // you need to grab for those for 2 crossing blocks ago.
   $f1s = chado_query("
@@ -674,7 +823,7 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
 
   // For each F1 we want to create a single row in the data entry table
   // allowing breeders to specify instructions per F1.
-  // NOTE: titles are commented out to make things easier in the theme function
+  // Titles are commented out to make things easier in the theme function
   // where these plain form fields will be rendered in a table layout.
   foreach ($f1s as $cross_num => $details) {
 
@@ -777,21 +926,11 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
 
     // Add a number of cross to dropdowns to allow breeders to specify what
     // parents they want to cross with the current F1
-    // NOTE: Ajax is used to ensure that there is always one more select box
+    // Ajax is used to ensure that there is always one more select box
     // than there are parents selected so that breeders can add more parents.
 
     // Determine how many select boxes we need.
     $num_crosses = (!empty($form_state['values']['f1'][$cross_num]['cross_to'])) ? sizeof($form_state['values']['f1'][$cross_num]['cross_to']) : 0;
-    /*
-    // Ensure that the triggering element is limited to a select box from within the row,
-    // and if so, increment the number of crosses
-    if (isset($form_state['triggering_element'])
-      AND isset($form_state['triggering_element']['#id'])
-      AND preg_match('/^edit-f1-' . $i . '/', $form_state['triggering_element']['#id']))
-    {
-      $num_crosses++;
-    }
-    */
     for ($j = 0; $j <= $num_crosses; $j++) {
       // Determine our default value for the next select box.
       if (isset($form_state['values']['f1'][$cross_num]['cross_to'][$j])) {

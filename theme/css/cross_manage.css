@@ -11,6 +11,10 @@
  * Plan Crosses: Parents Form
  */
 
+table#cross_manage_crossingblock_parents_form tr.error-row td {
+  background-color: #FEEBEB;
+}
+
 /* -- Clear all borders */
 table#cross_manage_crossingblock_parents_form tr th, table#cross_manage_crossingblock_parents_form tr td {
   border-color: transparent;
