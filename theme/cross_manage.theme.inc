@@ -102,34 +102,33 @@ function theme_cross_manage_crossingblock_parents($vars) {
   $rows = array();
   $rows[] = $header2;
   foreach (element_children($element) as $key) {
-    if (preg_match('/^[0-9]+$/',$key)) {
-      $row = array();
-      $row['data'] = array();
-      foreach ($header2 as $fieldname => $title) {
-        $cell = array(
-          'data' => drupal_render($element[$key][$fieldname]),
-          'class' => array('cross-parents', 'parent-cell', $fieldname),
-        );
+    $row = array();
+    $row['data'] = array();
+    foreach ($header2 as $fieldname => $title) {
+      $cell = array(
+        'data' => drupal_render($element[$key][$fieldname]),
+        'class' => array('cross-parents', 'parent-cell', $fieldname),
+      );
 
-        $row['data'][] = $cell;
-        $row['class'] = array('cross-parents-row', 'draggable', $element[$key]['highlight_class']['#value']); // needed for table dragging
-        if (sizeof($rows) == 0) {
-          $row['class'][] = 'first';
-        }
+      $row['data'][] = $cell;
+      $row['class'] = array('cross-parents-row', 'draggable', $element[$key]['highlight_class']['#value']); // needed for table dragging
+      if (sizeof($rows) == 0) {
+        $row['class'][] = 'first';
       }
-      $rows[] = $row;
     }
+    $rows[] = $row;
   }
 
   end($rows);
   $last_key = key($rows);
   $rows[$last_key]['class'][] = 'last';
+  $rows[$last_key]['class'][] = 'add-new';
 
   return theme('table', array(
     'header' => $header1,
     'rows' => $rows,
-    'attributes' => array('id' => 'cross_manage_crossingblock_parents_form'), // needed for table dragging
-  )) . drupal_render($element['add-row']);
+    'attributes' => array('id' => 'cross_manage_crossingblock_parents_form', 'class' => array('cross-manage','cross-manage-table-form','step1')), // needed for table dragging
+  ));
 }
 
 /**
@@ -141,13 +140,13 @@ function theme_cross_manage_crossingblock_f1($vars) {
   $header = array(
     'cross_num' => array('data' => 'Cross Number', 'class' => 'cross_num'),
     'type' => array('data' => 'Type', 'class' => 'type'),
-    'pedigree' => array('data' => 'Pedigree', 'class' => 'pedigree'),
     'seed_num' => array('data' => 'Seed Produced', 'class' => 'seed_num'),
     'seed_allocate' => array('data' => 'Seed Allocation', 'class' => 'seed_allocate'),
     // @TODO: Include marker data/selection
     //'marker_data' => array('data' => 'Markers', 'class' => 'markers'),
-    'notes' => array('data' => 'Notes', 'class' => 'notes'),
     'cross_to' => array('data' => 'Cross To', 'class' => 'cross_to'),
+    'notes' => array('data' => 'Notes', 'class' => 'notes'),
+
   );
 
   $rows = array();
@@ -175,7 +174,7 @@ function theme_cross_manage_crossingblock_f1($vars) {
   return theme('table', array(
     'header' => $header,
     'rows' => $rows,
-    'attributes' => array('id' => 'cross_manage_crossingblock_f1_form'), // needed for table dragging
+    'attributes' => array('id' => 'cross_manage_crossingblock_f1_form', 'class' => array('cross-manage','cross-manage-table-form','step1')), // needed for table dragging
   )) . drupal_render($element['add-row']);
 }
 
@@ -215,7 +214,110 @@ function theme_cross_manage_crossingblock_marker_entry($vars) {
   return theme('table', array(
     'header' => $header,
     'rows' => $rows,
-    'attributes' => array('id' => 'cross_manage_crossingblock_f1_form'), // needed for table dragging
+    'attributes' => array('id' => 'cross_manage_crossingblock_marker_form', 'class' => array('cross-manage','cross-manage-table-form','step1')), // needed for table dragging
   )) . drupal_render($element['add-row']);
 }
 
+/**
+ * Theme the Register Crosses Recentaly added table.
+ */
+function theme_cross_manage_crossingblock_register_crosses($vars) {
+  $element = $vars['element'];
+  
+  $header = array(
+    'cross_num' => array('data' => 'Cross Number', 'class' => 'cross_num_col', 'fields' => array('cross_num')),
+    'type' => array('data' => 'Resulting Cross', 'class' => 'type', 'fields' => array('type', 'species')),
+    'parent' => array('data' => 'Parents', 'class' => 'parents', 'fields' => array('maternal_parent_icon', 'maternal_parent', 'paternal_parent_icon', 'paternal_parent')),
+    'data' => array('data' => 'Characteristics', 'class' => 'data', 'fields' => array('data')),
+    'notes' => array('data' => 'Notes', 'class' => 'notes', 'fields' => array('notes')),
+    'action' => array('data' => '', 'class' => 'action', 'fields' => array('action')),
+  );
+
+  $rows = array();
+  foreach (element_children($element) as $key) {
+    $row = array();
+    $row['data'] = array();
+    foreach ($header as $columnname => $data) {
+      
+      $rendered = '';
+      foreach ($data['fields'] as $fieldname) {
+        $rendered .= drupal_render($element[$key][$fieldname]);
+      }
+      
+      $cell = array(
+        'data' => $rendered,
+        'class' => array('register-crosses', 'cross-cell', $columnname),
+      );
+
+      $row['data'][] = $cell;
+      $row['class'] = array('register-crosses-row', 'draggable'); // needed for table dragging
+      if (sizeof($rows) == 0) {
+        $row['class'][] = 'first';
+      }
+    }
+    $rows[] = $row;
+  }
+
+  $rows[0]['class'][] = 'add-new';
+  
+  end($rows);
+  $last_key = key($rows);
+  $rows[$last_key]['class'][] = 'last';
+
+  return theme('table', array(
+    'caption' => t('Registered Crosses'),
+    'header' => $header,
+    'rows' => $rows,
+    'attributes' => array('id' => 'cross_manage_crossingblock_register_crosses_form', 'class' => array('cross-manage','cross-manage-table-form','step4')), // needed for table dragging
+  ));
+}
+
+/**
+ * Theme the Register Crosses Add new table.
+ */
+function theme_cross_manage_crossingblock_register_crosses_add_new($vars) {
+  $element = $vars['element'];
+  
+  $header = array(
+    'cross_num' => array('data' => 'Cross Number', 'class' => 'cross_num_col', 'fields' => array('cross_num_col')),
+    'type' => array('data' => 'Resulting Cross', 'class' => 'type', 'fields' => array('type', 'species')),
+    'parent' => array('data' => 'Parents', 'class' => 'parents', 'fields' => array('maternal_parent_icon', 'maternal_parent', 'paternal_parent_icon', 'paternal_parent')),
+    'data' => array('data' => 'Characteristics', 'class' => 'data', 'fields' => array('data')),
+    'notes' => array('data' => 'Notes', 'class' => 'notes', 'fields' => array('notes')),
+  );
+
+  $rows = array();
+  $row = array();
+  $row['data'] = array();
+  foreach ($header as $columnname => $data) {
+    
+    $rendered = '';
+    foreach ($data['fields'] as $fieldname) {
+      $rendered .= drupal_render($element[$fieldname]);
+    }
+    
+    $cell = array(
+      'data' => $rendered,
+      'class' => array('register-crosses', 'cross-cell', $columnname),
+    );
+
+    $row['data'][] = $cell;
+    $row['class'] = array('register-crosses-row', 'draggable'); // needed for table dragging
+    if (sizeof($rows) == 0) {
+      $row['class'][] = 'first';
+    }
+  }
+  $rows[] = $row;
+
+  end($rows);
+  $last_key = key($rows);
+  $rows[$last_key]['class'][] = 'last';
+  $rows[$last_key]['class'][] = 'add-new';
+
+  return theme('table', array(
+    'caption' => t('Register New Cross'),
+    'header' => $header,
+    'rows' => $rows,
+    'attributes' => array('id' => 'cross_manage_crossingblock_register_crosses_form_add_new', 'class' => array('cross_manage_crossingblock_register_crosses_form', 'cross-manage','cross-manage-table-form','step4')), // needed for table dragging
+  )) . render($element['add-row']);
+}
