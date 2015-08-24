@@ -402,18 +402,6 @@ function cross_manage_crossingblock_assign_cross_num_form($form, $form_state) {
 				'#markup' =>  ' ',
 			);
 		}
-/*
-		$form['crosses'][$cross->stock_id]['action'] = array(
-			'#type' => 'image_button',
-			'#value' => 'Edit Cross',
-			'#src' => drupal_get_path('module', 'cross_manage') . '/theme/images/edit-button.png',
-			'#prefix' => '<span class="cross-parents edit-cross image-button edit-button">',
-			'#suffix' => '</span>',
-		);
-		if ($i % 2 != 0) {
-			$form['crosses'][$cross->stock_id]['action']['#prefix'] = '<span class="cross-parents edit-cross image-button edit-button odd-table-well">';
-		}
-*/
   }
   
   // Fix the title based on the actual number of crosses displayed.
@@ -435,6 +423,124 @@ function cross_manage_crossingblock_assign_cross_num_form($form, $form_state) {
   );
 
   return $form;
+}
+
+/**
+ * Form allowing breeders to set the crosses to be made
+ * for a given crossing block.
+ *
+ * Implements hook_form_validate().
+ */
+function cross_manage_crossingblock_assign_cross_num_form_validate($form, $form_state) {
+
+	if (isset($form_state['clicked_button']) AND $form_state['clicked_button']['#value'] == 'Add Cross') {
+		
+		// Variables to make validation easier.
+		$new_cross = $form_state['values']['crosses'][0];
+		$pnums = array();	
+		
+		// VALIDATE: Ensure requred fields are filled in.
+		// Doing the validation here rather than #required in the form b/c the errors are not
+		// showing up for non-titled fields...
+		if (empty($new_cross['maternal_parent'])) {
+			form_set_error('crosses][0][maternal_parent', 'The <em>Maternal Parent</em> is required to register a new cross.');
+		}
+		if (empty($new_cross['paternal_parent'])) {
+			form_set_error('crosses][0][paternal_parent', 'The <em>Paternal Parent</em> is required to register a new cross.');
+		}
+		if (empty($new_cross['data']['num_seeds']) AND $new_cross['data']['num_seeds'] !== '0') {
+			form_set_error('crosses][0][data][num_seeds', 'The <em>Number of Seeds</em> is required to register a new cross.');
+		}
+		
+		// VALIDATE: Parents are in the parents table for this crossing block.
+		$parents = array(
+			array('title' => 'Maternal Parent', 'field' => 'maternal_parent'),
+			array('title' => 'Paternal Parent', 'field' => 'paternal_parent'),
+		);
+		foreach ($parents as $p) {
+			// -- 1st check they used the drop-down.
+			if (preg_match('/^P(\d+): (.*)$/',$new_cross[ $p['field'] ], $matches)) {
+				// -- Now check the parent actually exists.
+				$present = db_query("
+					SELECT true 
+					FROM cross_manage_parents p 
+					LEFT JOIN chado.stock s ON s.stock_id=p.stock_id 
+					WHERE p.cb_year=:year AND p.cb_season=:season AND p.cb_species=:genus AND p.parent_number=:pnum AND s.name=:name",
+					array(
+						':year' => $form_state['build_info']['args'][1],
+						':season' => $form_state['build_info']['args'][2], 
+						':genus' => $form_state['build_info']['args'][0],
+						':pnum' => $matches[1],
+						':name' => $matches[2],
+					))->fetchField();
+					if (!$present) {
+						form_set_error('crosses][0][' . $p['field'], 'The <em>' . $p['title'] . '</em> you entered is not a parent of this crossing block. Please add it as a parent first.');
+					}
+					else {
+						// Keep track of the parent number so we don't need to extract it 2X.
+						$pnums[$p['field']] = $matches[1];
+					}
+			}
+			else {
+				form_set_error('crosses][0][' . $p['field'], 'Please select the <em>' . $p['title'] . '</em> from the autocomplete drop-down.');
+			}
+		}
+		
+		// VALIDATE: Seed count is a positive whole number.
+		// Check that it's not 0
+		if ($new_cross['data']['num_seeds'] === '0') {
+			form_set_error('crosses][0][data][num_seeds', 'It\'s assumed that all crosses registered should have <em>at least one seed</em>; failed crosses should not be registered.');
+		}
+		// Check 1) it's a number, 2) it's positive, and 3) it's a whole number.
+		elseif (!is_numeric($new_cross['data']['num_seeds']) || $new_cross['data']['num_seeds'] < 1 || $new_cross['data']['num_seeds'] != round($new_cross['data']['num_seeds'])) {
+			form_set_error('crosses][0][data][num_seeds', 'The <em>Number of Seeds</em> must be a positive whole number.');
+		}
+		
+		// VALIDATE: Seed color characteristics are actually colors?
+		$unacceptable_modifiers = array('marbled','mottled','spotted','dotted','speckled','stained','heavy','solid','dusty', 'like');
+		$color_fields = array(
+			array('title' => 'Cotyledon Color', 'field' => 'cotyledon_colour', 'plant_part' => 'cotyledon'),
+			array('title' => 'Seed Coat Color', 'field' => 'seedcoat_colour', 'plant_part' => 'seed coat'),
+		);
+		foreach ($color_fields as $c) {
+			str_replace($unacceptable_modifiers, '', $new_cross['data'][ $c['field'] ], $count);
+			if ($count) {
+				form_set_error('crosses][0][data][' . $c['field'], 'Please enter the main colour of the '.$c['plant_part'].' without any modifiers (marbled, mottled, spotted, stained).');
+			}
+		}
+		
+		// VALIDATE: Check that the selected species makes sence based on the species of the parents?
+		if (isset($pnums['maternal_parent']) AND isset($pnums['paternal_parent'])) {
+			$maternal = cross_manage_get_parent(array(
+				'parent_number' => $pnums['maternal_parent'], 
+				'cb_year' => $form_state['build_info']['args'][1],
+				'cb_season' => $form_state['build_info']['args'][2], 
+				'cb_species' => $form_state['build_info']['args'][0]
+			));
+
+			$paternal = cross_manage_get_parent(array(
+				'parent_number' => $pnums['paternal_parent'], 
+				'cb_year' => $form_state['build_info']['args'][1],
+				'cb_season' => $form_state['build_info']['args'][2], 
+				'cb_species' => $form_state['build_info']['args'][0]
+			));
+			
+			$maternal_organism_id = $maternal->stock->organism_id->organism_id;
+			$paternal_organism_id = $paternal->stock->organism_id->organism_id;
+			if ($new_cross['species'] != $maternal_organism_id AND $new_cross['species'] != $paternal_organism_id) {
+				if ($maternal_organism_id == $paternal_organism_id) {
+					$species = $maternal->stock->organism_id->genus .' '. $maternal->stock->organism_id->species;
+					form_set_error('crosses][0][species', 'Since both parents are <em>'.$species.'</em>, the resulting cross species should also be <em>'.$species.'</em>.');
+				} 
+				else {
+					$mat_species = $maternal->stock->organism_id->genus .' '. $maternal->stock->organism_id->species;
+					$pat_species = $paternal->stock->organism_id->genus .' '. $paternal->stock->organism_id->species;
+					form_set_error('crosses][0][species', 'The current cross is interspecific. In this case you should choose the most represented species from the parents (<em>'.$mat_species.'</em> OR <em>'.$pat_species.'</em>)');
+				}
+			}
+		}	
+	}
+
 }
 
 /**

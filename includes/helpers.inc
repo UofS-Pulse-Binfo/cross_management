@@ -5,6 +5,30 @@
  */
 
 /**
+ * Retrieve the Parent/Stock details
+ */
+function cross_manage_get_parent($identifier) {
+  // A list of possible identifiers.
+  $possible_fields = array('cb_parent_id' => 'p','cb_year' => 'p','cb_season' => 'p','cb_species' => 'p', 'parent_number' => 'p','stock_id' => 'p','name' => 's', 'uniquename' => 's');
+  
+  $where = array();
+  $args = array();
+  foreach ($possible_fields as $field => $alias) {
+    if (isset($identifier[$field])) {
+      $where[] = $alias.'.'.$field.'=:'.$field;
+      $args[':'.$field] = $identifier[$field];
+    }
+  }
+  
+  $parent = db_query('SELECT p.* FROM {cross_manage_parents} p LEFT JOIN chado.stock s ON s.stock_id=p.stock_id WHERE '.implode(' AND ',$where), $args)->fetchObject();
+
+  $stock = chado_generate_var('stock', array('stock_id' => $parent->stock_id));
+  $parent->stock = $stock;
+  
+  return $parent;
+}
+
+/**
  * Retrieve the stock_id based on the name.
  * Supported name locations include stock.name, stock.uniquename.
  */

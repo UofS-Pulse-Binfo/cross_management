@@ -13,6 +13,7 @@ span.image-button input {
   padding: 8px;
   margin: 0;
   border: 0;
+  outline: 0;
   /* Background shading */
   background-color: #4C525C;
   background-image: -webkit-gradient(linear, left top, left bottom, from(#4C525C), to(#C8CACF));
