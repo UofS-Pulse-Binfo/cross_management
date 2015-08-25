@@ -124,6 +124,12 @@ table tr th.header-category{
   background-color: #1F2A37;
 }
 
+/* -- Differentiate optional columns. */
+table tr th .header.optional {
+  font-weight: normal;
+  color: #CED1D5;
+}
+
 /* -- Add in bottom Border */
 table.cross-manage-table-form  tr.last td {
   border-bottom: 1px solid #314355;
@@ -293,7 +299,7 @@ table#cross_manage_crossingblock_register_crosses_form  td.type,
   table#cross_manage_crossingblock_register_crosses_form th.type {
 
   word-wrap: break-word;
-  width: 150px;
+  width: 275px;
 }
 table#cross_manage_crossingblock_register_crosses_form  td.parent,
   table#cross_manage_crossingblock_register_crosses_form th.parent {
@@ -301,7 +307,7 @@ table#cross_manage_crossingblock_register_crosses_form  td.parent,
 }
 table#cross_manage_crossingblock_register_crosses_form  td.data,
   table#cross_manage_crossingblock_register_crosses_form th.data {
-  width: 250px;
+  width: 150px;
 }
 table#cross_manage_crossingblock_register_crosses_form  tr th.action,
   table#cross_manage_crossingblock_register_crosses_form  tr td.action {
@@ -331,6 +337,13 @@ table#cross_manage_crossingblock_register_crosses_form  tr th.action,
 }
 
 /* -- Type/Species */
+#cross_manage_crossingblock_register_crosses_form .type .cross {
+  display: flex;
+  justify-content: space-between;
+}
+#cross_manage_crossingblock_register_crosses_form .type .cross .cross-col2 {
+  width: 110px;
+}
 table#cross_manage_crossingblock_register_crosses_form label {
   display:inline-block;
   text-align:right;
@@ -351,21 +364,18 @@ td.parent .form-type-textfield input {
   width: 170px;
 }
 /* -- Data */
-#cross_manage_crossingblock_register_crosses_form .data .data-col1 {
-  float: left;
-}
-#cross_manage_crossingblock_register_crosses_form .data .data-col2 {
-  float: right;
-}
-#cross_manage_crossingblock_register_crosses_form .data .data-col1 input[type=text] {
-  width: 100px;
+#cross_manage_crossingblock_register_crosses_form .data input[type=text] {
+  width: 130px;
 }
 #cross_manage_crossingblock_register_crosses_form .unknown-data {
   color: #B3B3B3;
   font-style: italic;
 }
-#cross_manage_crossingblock_register_crosses_form .data .data-col2 {
+#cross_manage_crossingblock_register_crosses_form .type .cross {
   padding-top: 5px;
+}
+#cross_manage_crossingblock_register_crosses_form .type .cross .cross-col1 {
+  padding-top: 3px;
 }
 #cross_manage_crossingblock_register_crosses_form .form-item-crosses-new-data-selfed label {
   float: left;

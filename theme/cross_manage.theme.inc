@@ -225,44 +225,84 @@ function theme_cross_manage_crossingblock_register_crosses($vars) {
   $element = $vars['element'];
   
   $header = array(
-    'cross_num' => array('data' => 'Cross Number', 'class' => 'cross_num_col', 'fields' => array('cross_num')),
-    'type' => array('data' => 'Resulting Cross', 'class' => 'type', 'fields' => array('type', 'species')),
-    'parent' => array('data' => 'Parents', 'class' => 'parents', 'fields' => array('maternal_parent_icon', 'maternal_parent', 'paternal_parent_icon', 'paternal_parent')),
-    'data' => array('data' => 'Characteristics', 'class' => 'data', 'fields' => array('data')),
-    'notes' => array('data' => 'Notes', 'class' => 'notes', 'fields' => array('notes')),
-    'action' => array('data' => '', 'class' => 'action', 'fields' => array('action')),
+    'cross_num' => array('data' => 'Cross Number', 'class' => 'cross_num_col'),
+    'type' => array('data' => 'Resulting Cross', 'class' => 'type'),
+    'parent' => array('data' => 'Parents', 'class' => 'parents'),
+    'data' => array('data' => 'Characteristics <div class="header optional">(optional)</div>', 'class' => 'data'),
+    'notes' => array('data' => 'Notes <div class="header optional">(optional)</div>', 'class' => 'notes'),
+    'action' => array('data' => '', 'class' => 'action'),
   );
 
+  // For each row in the form.
   $rows = array();
-  foreach (element_children($element) as $key) {
-    $row = array();
-    $row['data'] = array();
-    foreach ($header as $columnname => $data) {
-      
-      $rendered = '';
-      foreach ($data['fields'] as $fieldname) {
-        $rendered .= drupal_render($element[$key][$fieldname]);
-      }
-      
-      $cell = array(
-        'data' => $rendered,
-        'class' => array('register-crosses', 'cross-cell', $columnname),
-      );
+  $i = 0;
+  $children = element_children($element);
+  foreach ($children as $key) {
+    $rows[$i] = array('data' => array());
 
-      $row['data'][] = $cell;
-      $row['class'] = array('register-crosses-row', 'draggable'); // needed for table dragging
-      if (sizeof($rows) == 0) {
-        $row['class'][] = 'first';
-      }
+    // Handle each column.
+    // -- Cross Number.
+    $rows[$i]['data']['cross_num'] = array(
+      'data' => drupal_render($element[$key]['cross_num']),
+      'class' => array('register-crosses', 'cross-cell', 'cross_num'),
+    );
+    
+    // -- Resulting Cross.
+    $cell = '<div class="cross">'
+            .'<div class="cross-col1">'
+              . drupal_render($element[$key]['type'])
+              . drupal_render($element[$key]['species'])
+            . '</div><div class="cross-col2">'
+              . drupal_render($element[$key]['selfed'])
+              . drupal_render($element[$key]['num_seeds'])
+            . '</div>'
+          . '</div>';
+    $rows[$i]['data']['cross'] = array(
+      'data' => $cell,
+      'class' => array('register-crosses', 'cross-cell', 'type'),
+    );
+    
+    // -- Parents.
+    $cell = drupal_render($element[$key]['maternal_parent_icon']) 
+              . drupal_render($element[$key]['maternal_parent'])
+          . drupal_render($element[$key]['paternal_parent_icon']) 
+              . drupal_render($element[$key]['paternal_parent']);
+    $rows[$i]['data']['parent'] = array(
+      'data' => $cell,
+      'class' => array('register-crosses', 'cross-cell', 'parent'),
+    );
+    
+    // -- Characteristics.
+    $rows[$i]['data']['data'] = array(
+      'data' => drupal_render($element[$key]['data']),
+      'class' => array('register-crosses', 'cross-cell', 'data'),
+    );
+    
+    // -- Notes.
+    $rows[$i]['data']['notes'] = array(
+      'data' => drupal_render($element[$key]['notes']),
+      'class' => array('register-crosses', 'cross-cell', 'notes'),
+    );
+    
+    // -- Action.
+    $rows[$i]['data']['action'] = array(
+      'data' => drupal_render($element[$key]['action']),
+      'class' => array('register-crosses', 'cross-cell', 'action'),
+    );
+    
+    // Add classes for the current row.
+    $rows[$i]['class'] = array('register-crosses-row', 'draggable');
+    if ($i == 0) {
+      $rows[$i]['class'][] = 'add-new';
     }
-    $rows[] = $row;
+    if ($i == (sizeof($children)-1)) {
+      $rows[$i]['class'][] = 'last';
+    }
+    
+    $i++;
   }
 
-  $rows[0]['class'][] = 'add-new';
-  
-  end($rows);
-  $last_key = key($rows);
-  $rows[$last_key]['class'][] = 'last';
+dpm($rows, 'rows');
 
   return theme('table', array(
     'caption' => t('Registered Crosses'),
@@ -270,54 +310,4 @@ function theme_cross_manage_crossingblock_register_crosses($vars) {
     'rows' => $rows,
     'attributes' => array('id' => 'cross_manage_crossingblock_register_crosses_form', 'class' => array('cross-manage','cross-manage-table-form','step4')), // needed for table dragging
   ));
-}
-
-/**
- * Theme the Register Crosses Add new table.
- */
-function theme_cross_manage_crossingblock_register_crosses_add_new($vars) {
-  $element = $vars['element'];
-  
-  $header = array(
-    'cross_num' => array('data' => 'Cross Number', 'class' => 'cross_num_col', 'fields' => array('cross_num_col')),
-    'type' => array('data' => 'Resulting Cross', 'class' => 'type', 'fields' => array('type', 'species')),
-    'parent' => array('data' => 'Parents', 'class' => 'parents', 'fields' => array('maternal_parent_icon', 'maternal_parent', 'paternal_parent_icon', 'paternal_parent')),
-    'data' => array('data' => 'Characteristics', 'class' => 'data', 'fields' => array('data')),
-    'notes' => array('data' => 'Notes', 'class' => 'notes', 'fields' => array('notes')),
-  );
-
-  $rows = array();
-  $row = array();
-  $row['data'] = array();
-  foreach ($header as $columnname => $data) {
-    
-    $rendered = '';
-    foreach ($data['fields'] as $fieldname) {
-      $rendered .= drupal_render($element[$fieldname]);
-    }
-    
-    $cell = array(
-      'data' => $rendered,
-      'class' => array('register-crosses', 'cross-cell', $columnname),
-    );
-
-    $row['data'][] = $cell;
-    $row['class'] = array('register-crosses-row', 'draggable'); // needed for table dragging
-    if (sizeof($rows) == 0) {
-      $row['class'][] = 'first';
-    }
-  }
-  $rows[] = $row;
-
-  end($rows);
-  $last_key = key($rows);
-  $rows[$last_key]['class'][] = 'last';
-  $rows[$last_key]['class'][] = 'add-new';
-
-  return theme('table', array(
-    'caption' => t('Register New Cross'),
-    'header' => $header,
-    'rows' => $rows,
-    'attributes' => array('id' => 'cross_manage_crossingblock_register_crosses_form_add_new', 'class' => array('cross_manage_crossingblock_register_crosses_form', 'cross-manage','cross-manage-table-form','step4')), // needed for table dragging
-  )) . render($element['add-row']);
 }
