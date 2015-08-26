@@ -371,7 +371,7 @@ function cross_manage_crossingblock_assign_cross_num_form($form, $form_state) {
 		else {		
 			$form['crosses'][$key]['notes'] = array(
 				'#type' => 'item',
-				'#markup' => 'Lorem ipsum',
+				'#markup' => (isset($properties[ $property_types['notes'] ])) ? $properties[ $property_types['notes'] ] : '',
 			);
 		}
 		
@@ -425,7 +425,6 @@ function cross_manage_crossingblock_assign_cross_num_form($form, $form_state) {
  */
 function cross_manage_crossingblock_assign_cross_num_form_validate($form, $form_state) {
 
-dpm($form_state, 'form state in validate');
 	if (isset($form_state['clicked_button']) AND $form_state['clicked_button']['#value'] == 'Add Cross') {
 		
 		// Variables to make validation easier.
@@ -688,7 +687,16 @@ function cross_manage_crossingblock_assign_cross_num_form_submit($form, $form_st
 		}
 	
 		// Save Notes.
-		// Hmmm... but notes can currently only be saved for parents... Maybe I will have to do a comment?
+		if (!empty($form_state['values']['crosses'][0]['notes'])) {
+			$record = array('table' => 'stock', 'id' => $stock['stock_id']);
+			$property = array(
+					'type_id' => $type_ids['notes'],
+					'value' => $form_state['values']['crosses'][0]['notes'],
+					'rank' => 0
+				);
+			$options = array('update_if_present' => TRUE);
+			chado_insert_property($record, $property, $options);
+		}
 	
 		// Finally create a node associated with this stock.
 		// This is essentially sync'ing for a single stock.

@@ -302,8 +302,6 @@ function theme_cross_manage_crossingblock_register_crosses($vars) {
     $i++;
   }
 
-dpm($rows, 'rows');
-
   return theme('table', array(
     'caption' => t('Registered Crosses'),
     'header' => $header,

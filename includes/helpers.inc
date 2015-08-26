@@ -86,7 +86,8 @@ function cross_manage_get_cb_property_type_ids($type) {
     'num_seeds' => 'number_seeds_produced',
     'cotyledon_colour' => 'cotyledon_colour',
     'seedcoat_colour' => 'seed_coat_colour',
-    'selfed' => 'self_pollination'
+    'selfed' => 'self_pollination',
+    'notes' => 'comment',
   );
   
   if ($type == 'all') {
