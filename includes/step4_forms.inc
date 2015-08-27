@@ -76,6 +76,13 @@ function cross_manage_crossingblock_assign_cross_num_form($form, $form_state) {
     '#markup' => theme('cross_manage_shepherd_start_tour_link')
   );
 
+	$form['#attached']['js'][] = libraries_get_path('d3') . '/d3.min.js';
+	$form['#attached']['js'][] = $crossmanage_path . '/theme/js/CrossManage_registerCrossesProgress.js';
+	$form['progress'] = array(
+		'#type' => 'markup',
+		'#markup' => '<div id="proportion-based-stacked-progressbar"></div>',
+	);
+	
 	// First provide form for new crosses.
 	//------------------------------------
 	$max_crossnum = cross_manange_get_current_cross_number($species);
