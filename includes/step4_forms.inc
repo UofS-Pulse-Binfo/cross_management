@@ -35,6 +35,9 @@ function cross_manage_crossingblock_assign_cross_num_form($form, $form_state) {
     return $form;
   }
 
+	// Ensure the chado and cross management system are sync'd for this crossing block.
+	cross_manage_link_stocks_to_crosses($cb_year, $cb_season, $species);
+	
   // Get a list of the cross properties for use later.
   $property_types = cross_manage_get_cb_property_type_ids('all');
   

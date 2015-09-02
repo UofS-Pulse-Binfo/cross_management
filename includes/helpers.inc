@@ -4,6 +4,9 @@
  * Contains helper functions related to cross management.
  */
 
+/****************************/
+/* -- Retrieve General Data */
+
 /**
  * Retrieve the Parent/Stock details
  */
@@ -296,6 +299,65 @@ function cross_manage_format_number_ordinal($number) {
   }
   else {
     return $number. $ends[$number % 10];
+  }
+
+}
+
+/********************/
+/* -- Miscellaneous */
+
+/**
+ * Links chado stocks describing crosses to the cross management crosses (Step 1).
+ *
+ * Specifically, this function looks up all chado stocks for the current crossing block
+ * and then matches their parents to crosses recorded in cross_manage_planned_crosses.
+ * The stock_id of the matching chado stock is saved in cross_manage_planned_crosses to
+ * allow for quicker calculation of stats and to indicate which crosses requested by the
+ * breeder were actually made by the field lab.
+ *
+ * @param $cb_year
+ *   The year of the crossing block.
+ * @param $cb_season
+ *   The season of the crossing block.
+ * @param $genus
+ *   The genus of the germplasm crossed in the crossing block.
+ */
+function cross_manage_link_stocks_to_crosses($cb_year, $cb_season, $genus) {
+
+  // Generate a mapping from chado stock_id to cross management cb_parent_id.
+  $parents = array();
+  $results = db_query(
+    'SELECT p.cb_parent_id, p.stock_id FROM {cross_manage_parents} p WHERE p.cb_year=:year AND p.cb_season=:season AND p.cb_species=:genus',
+    array(':year' => $cb_year,':season' => $cb_season,':genus' => $genus));
+  foreach ($results as $r) {
+    $parents[$r->stock_id] = $r->cb_parent_id;
+  }
+  
+  // Look up all the chado crosses for the current crossing block.
+  $crosses = chado_query('
+    SELECT s.stock_id, mat.subject_id as mat_parent, pat.subject_id as pat_parent 
+    FROM chado.stock s
+  LEFT JOIN {organism} org ON org.organism_id=s.organism_id
+  LEFT JOIN chado.stock_relationship mat ON mat.object_id=s.stock_id AND mat.type_id=3632
+  LEFT JOIN chado.stock_relationship pat ON pat.object_id=s.stock_id AND pat.type_id=3633
+  WHERE org.genus=:genus AND s.stock_id IN 
+    (SELECT year.stock_id FROM chado.stockprop year, chado.stockprop season 
+      WHERE year.stock_id=season.stock_id 
+      AND year.value=:year AND season.value=:season)',
+  array(':year' => $cb_year,':season' => $cb_season,':genus' => $genus));
+  foreach ($crosses as $chado_cross) {
+    
+    // As long as each parent of the chado cross is also a parent in the current crossing block,
+    // Attempt to update the record where the parents for the chado cross are specified
+    // as a cross in the drupal cross management table.
+    if (isset($parents[ $chado_cross->mat_parent ]) AND isset($parents[ $chado_cross->pat_parent ])) {
+      $cross = array(
+        'maternal_parent_id' => $parents[ $chado_cross->mat_parent ],
+        'paternal_parent_id' => $parents[ $chado_cross->pat_parent ],
+        'cross_stock_id' => $chado_cross->stock_id
+      );
+      drupal_write_record('cross_manage_planned_crosses', $cross, array('maternal_parent_id', 'paternal_parent_id'));
+    }
   }
 
 }
