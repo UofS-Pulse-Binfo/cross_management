@@ -103,6 +103,11 @@ function cross_manage_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
+      'cross_stock_id' => array(
+        'description' => 'The chado stock denoting this cross. Note: the chado cross is only created once the progeny is collected.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ),
     ),
     'indexes' => array(
       'maternal_parent_stock' => array('maternal_parent_id'),
@@ -121,6 +126,11 @@ function cross_manage_schema() {
       'pateral_parent' => array(
         'table' => 'cross_manage_parents',
         'columns' => array('paternal_parent_id' => 'cb_parent_id'),
+      ),
+      // Drupal won't enforce this :(.
+      'chado_stock' => array(
+        'table' => 'chado.stock',
+        'columns' => array('cross_stock_id' => 'stock_id'),
       ),
     ),
     'primary key' => array('cb_cross_id'),
