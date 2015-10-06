@@ -7,6 +7,13 @@
       '!year' => $crossingblock_year));
   drupal_set_title($title);
 
+  // Set the breadcrumb.
+  $breadcrumb = array();
+	$breadcrumb[] = l('Home', '<front>');
+	$breadcrumb[] = l('Crossing Block Management', 'crossing-block');
+	$breadcrumb[] = l($crossingblock_season. ' ' . $crossingblock_year, base_path() . request_uri()); // Link to current URL
+	drupal_set_breadcrumb($breadcrumb);
+	
   // Checkmark image.
   $checkmark_img_html = '<img src="http://images.sodahead.com/polls/004121505/3412401521_transparent_green_checkmark_md_answer_1_xlarge.png" width=20 height=20 style="border:none;">';
 ?>
@@ -80,6 +87,8 @@
           <div class="description">Indicate which germplasm will be parents for the upcoming crosses.</div></li>
         <li class="form"><div class="title"><?php print l("F1's Form", $form_paths['F1']); ?></div>
           <div class="description">Carry forward F1's from the previous crossing block.</div></li>
+        <li class="list"><div class="title"><?php print l("Full Parent List", $list_paths['parent_list']); ?></div>
+          <div class="description">List all parents (including F1s) for the current crossing block.</div></li>
       </ul>
     </div>
   </div>
@@ -123,13 +132,13 @@
       or greenhouse.</p>
     <div id="step-nav-icons" class="step-3">
       <ul>
-        <li class="list"><div class="title">Seed List</div>
+        <li class="list"><div class="title"><?php print l("Seed List", $list_paths['seed_list']); ?></div>
           <div class="description">Lists all the seed required for the current crossing block.</div></li>
-        <li class="list"><div class="title">Labels Template</div>
-          <div class="description">Template for labels to tag parents in the field.</div></li>
-        <li class="list"><div class="title">Crosses</div>
+        <!--<li class="list"><div class="title"><?php print l("Labels Template", $list_paths['parent_labels']); ?></div>
+          <div class="description">Template for labels to tag parents in the field.</div></li>-->
+        <li class="list"><div class="title"><?php print l("Crosses", $list_paths['crosses_basic']); ?></div>
           <div class="description">Lists the crosses to be done for this crossing block.</div></li>
-        <li class="list"><div class="title">Grow-outs</div>
+        <li class="list"><div class="title"><?php print l("Grow-outs", $list_paths['growouts']); ?></div>
           <div class="description">Lists the number of F1 seed to grow out in the field.</div></li>
       </ul>
     </div>

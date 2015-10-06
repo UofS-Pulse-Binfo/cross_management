@@ -1,0 +1,32 @@
+/**
+ * @file
+ * CSS specific to cross management views.
+ */
+
+/**
+ * Grouped Headers (Crosses)
+ */
+th.grouped-header {
+  text-align: center;
+}
+
+/* Ensure the grouped headers are more noticeable. */
+.view caption {
+  font-size: 1.3em;
+  font-weight: bold;
+}
+
+/**
+ * Seed List 
+ */
+.view-cb-seed-list th.views-field-parent-number, .view-cb-seed-list td.views-field-parent-number {
+  width: 100px;
+}
+
+/**
+ * Crosses
+ */
+.view-cb-planned-crosses th.views-field-parent-number, .view-cb-planned-crosses td.views-field-parent-number,
+  .view-cb-planned-crosses th.views-field-parent-number-1, .view-cb-planned-crosses td.views-field-parent-number-1 {
+    width: 100px; 
+}

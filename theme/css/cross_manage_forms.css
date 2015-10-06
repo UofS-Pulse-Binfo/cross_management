@@ -1,0 +1,451 @@
+/**
+ * @file
+ * Themeing for the cross management forms
+ */
+
+/**
+ * Minimal image buttons
+ */
+/* NOTE: Button symbol provided by the image attached to the image_button */
+/* Default: navy-button */
+span.image-button input {
+  /* Remove competing formatting */
+  padding: 8px;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  /* Background shading */
+  background-color: #4C525C;
+  background-image: -webkit-gradient(linear, left top, left bottom, from(#4C525C), to(#C8CACF));
+  background-image: -webkit-linear-gradient(top, #4C525C, #C8CACF); 
+  background-image: -moz-linear-gradient(top, #4C525C, #C8CACF); 
+  background-image: -ms-linear-gradient(top, #4C525C, #C8CACF); 
+  background-image: -o-linear-gradient(top, #4C525C, #C8CACF); 
+  /* Button sizing */
+  width: 14px;
+  height: 14px;
+  /* Make the button round */
+  border-radius: 50%;
+  /* Shadow to make it look like a button :) */
+  box-shadow: 0px 1px 4px #343840;
+}
+span.image-button input.form-submit:hover,
+  span.image-button input.form-submit:focus {
+  background: #4C525C;
+}
+/* Note: Form the "Well" the button sits in */
+/* Default: white-well */
+span.image-button {
+  display: block;
+  background: #FFF;
+  /* Well sizing */
+  padding: 6px;
+  width: 30px;
+  height: 30px;
+  /* Well positioning */
+  z-index: -1;
+  /* Make the well round */
+  border-radius: 50%;
+  /* Make the well 3D */
+  box-shadow: inset 0px 1px 4px 2px #F4F4F4, inset 0px 1px 4px 4px #F8F8F8;
+}
+span.image-button input.form-submit:active {
+  box-shadow: none;
+  border: solid 1px #B0B3B7;
+}
+
+span.image-button.green-button input {
+  /* Background */
+  background-color: #4E9537;
+  background-image: -webkit-gradient(linear, left top, left bottom, from(#4E9537), to(#6BB751));
+  background-image: -webkit-linear-gradient(top, #4E9537, #6BB751); 
+  background-image: -moz-linear-gradient(top, #4E9537, #6BB751); 
+  background-image: -ms-linear-gradient(top, #4E9537, #6BB751); 
+  background-image: -o-linear-gradient(top, #4E9537, #6BB751); 
+  /* Shadow */
+  box-shadow: 0px 1px 4px #374A2B, inset 0px 1px 3px #72C159;
+}
+span.image-button.green-button input.form-submit:hover,
+  span.image-button input.form-submit:focus {
+  background: #69CB4A;
+}
+
+span.image-button.dark-well {
+  background: #C1C3C6;
+  box-shadow: inset 0px 1px 4px 2px #B0B3B7, inset 0px 1px 4px 4px #D2D4D9;
+}
+span.image-button.dark-well input.form-submit:active {
+  box-shadow: none;
+  border: solid 1px #B0B3B7;
+}
+span.image-button.odd-table-well {
+  background: #F4F4F4;
+  box-shadow: inset 0px 1px 4px 2px #DFDFDF, inset 0px 1px 4px 4px #DFDFDF;
+}
+span.image-button.odd-table-well input.form-submit:active {
+  box-shadow: none;
+  border: solid 1px #DFDFDF;
+}
+
+
+/**
+ * Crossing Management Table Forms
+ */
+table.cross-manage-table-form tr.error-row td {
+  background-color: #FEEBEB;
+}
+table.cross-manage-table-form  tr.even td {
+  background: #F5F5F5;
+}
+
+/* -- Captions/Titles */
+table caption {
+  font-weight: bold;
+  font-style: italic;
+  font-size: 1.3em;
+}
+
+/* -- Highlighting the add new parent row */
+table.cross-manage-table-form  tr.add-new td {
+  background: rgba(45,57,82,0.2);
+}
+
+/* -- Clear all borders */
+table.cross-manage-table-form tr th, table.cross-manage-table-form tr td {
+  border-color: transparent;
+  border-bottom-color: transparent;
+  border-top-color: transparent;
+  border-right-color: transparent;
+  border-left-color: transparent;
+}
+
+/* -- Differentiate category header (ie: maternal/paternal parent ) */
+table tr th.header-category{
+  background-color: #1F2A37;
+}
+
+/* -- Differentiate optional columns. */
+table tr th .header.optional {
+  font-weight: normal;
+  color: #CED1D5;
+}
+
+/* -- Add in bottom Border */
+table.cross-manage-table-form  tr.last td {
+  border-bottom: 1px solid #314355;
+}
+
+/* -- Format Cross to select boxes */
+td.cross_to .form-item.form-type-select {
+  float: left;
+}
+
+/**
+ * Plan Crosses: Parents Form
+ */
+
+/* -- Set column widths */
+table#cross_manage_crossingblock_parents_form th.pnum,
+  table#cross_manage_crossingblock_parents_form td.pnum {
+
+  width: 60px;
+}
+table#cross_manage_crossingblock_parents_form th.line,
+  table#cross_manage_crossingblock_parents_form td.line {
+
+  width: 150px;
+}
+table#cross_manage_crossingblock_parents_form th.source,
+  table#cross_manage_crossingblock_parents_form td.source {
+
+  width: 150px;
+}
+table#cross_manage_crossingblock_parents_form th.cross_to,
+  table#cross_manage_crossingblock_parents_form td.cross_to {
+
+  max-width: 350px;
+}
+
+/* -- Form element specific tweaks */
+table#cross_manage_crossingblock_parents_form td.pnum .form-item,
+  table#cross_manage_crossingblock_parents_form td.pnum .pre-label {
+
+  line-height: 35px;
+  float: left;
+  padding-right: 2px;
+}
+table#cross_manage_crossingblock_parents_form td.line .form-item {
+  padding-top: 15px;
+}
+table#cross_manage_crossingblock_parents_form tr.add-new td.line input {
+  position: relative;
+  top: -8px;
+}
+
+/* -- Add in column dividers */
+table#cross_manage_crossingblock_parents_form  tr th.header-category,
+  table#cross_manage_crossingblock_parents_form  tr th.source,
+  table#cross_manage_crossingblock_parents_form  tr th.cross_to {
+
+    border-right: 1px solid #4C535C;
+}
+
+table#cross_manage_crossingblock_parents_form  tr td.source,
+  table#cross_manage_crossingblock_parents_form  tr td.cross_to {
+
+    border-right: 1px solid #EFEFEF;
+}
+
+table#cross_manage_crossingblock_parents_form  tr td.pnum {
+  border-left: 1px solid #314355;
+}
+
+table#cross_manage_crossingblock_parents_form  tr th.notes,
+  table#cross_manage_crossingblock_parents_form  tr td.notes {
+  border-right: 1px solid #314355;
+}
+
+/* -- Align Add More button to the Right */
+.cross-parents.add-more {
+  float: right;
+}
+
+/**
+ * Plan Crosses: F1s Form
+ */
+
+/* -- Set column widths */
+table#cross_manage_crossingblock_f1_form  td.cross_num,
+  table#cross_manage_crossingblock_f1_form th.cross_num {
+
+  width: 100px;
+}
+table#cross_manage_crossingblock_f1_form  td.type,
+  table#cross_manage_crossingblock_f1_form th.type {
+
+  width: 100px;
+}
+table#cross_manage_crossingblock_f1_form  td.seed_num,
+  table#cross_manage_crossingblock_f1_form  th.seed_num {
+
+  width: 100px;
+}
+table#cross_manage_crossingblock_f1_form  td.seed_allocate,
+  table#cross_manage_crossingblock_f1_form  th.seed_allocate {
+
+  width: 100px;
+}
+table#cross_manage_crossingblock_f1_form th.cross_to,
+  table#cross_manage_crossingblock_f1_form td.cross_to {
+
+  max-width: 350px;
+}
+
+/* -- Form element specific tweaks */
+table#cross_manage_crossingblock_f1_form  td.seed_num .form-item.form-type-textfield {
+  text-align: center;
+}
+table#cross_manage_crossingblock_f1_form  td.seed_num,
+  table#cross_manage_crossingblock_f1_form  th.seed_num {
+
+  text-align: center;
+}
+
+/* -- Handle the seed allocation fields */
+table#cross_manage_crossingblock_f1_form td.seed_allocate .form-item.form-type-textfield {
+  text-align: right;
+}
+table#cross_manage_crossingblock_f1_form td.seed_allocate label {
+  display:inline-block;
+  width:55px;
+  text-align:right;
+  font-weight:normal;
+  font-style: italic;
+}
+table#cross_manage_crossingblock_f1_form .form-text {
+  display:inline;
+  width:auto;
+}
+
+/* -- Add in column dividers */
+table#cross_manage_crossingblock_f1_form  tr th.notes,
+  table#cross_manage_crossingblock_f1_form  tr td.notes {
+  border-right: 1px solid #314355;
+}
+
+table#cross_manage_crossingblock_f1_form  tr th.cross_num,
+  table#cross_manage_crossingblock_f1_form  tr td.cross_num {
+  border-left: 1px solid #314355;
+}
+
+/* -- Align Save Progress button to the Right */
+input#edit-save-f1 {
+  float: right;
+}
+
+/**
+ * Register Crosses Form
+ */
+
+/* -- Set column widths */
+table#cross_manage_crossingblock_register_crosses_form  td.cross_num,
+  table#cross_manage_crossingblock_register_crosses_form th.cross_num {
+
+  word-wrap: break-word;
+  width: 50px;
+}
+
+table#cross_manage_crossingblock_register_crosses_form  td.type,
+  table#cross_manage_crossingblock_register_crosses_form th.type {
+
+  word-wrap: break-word;
+  width: 275px;
+}
+table#cross_manage_crossingblock_register_crosses_form  td.parent,
+  table#cross_manage_crossingblock_register_crosses_form th.parent {
+  width: 215px;
+}
+table#cross_manage_crossingblock_register_crosses_form  td.data,
+  table#cross_manage_crossingblock_register_crosses_form th.data {
+  width: 150px;
+}
+table#cross_manage_crossingblock_register_crosses_form  tr th.action,
+  table#cross_manage_crossingblock_register_crosses_form  tr td.action {
+  width: 45px;
+}
+
+/* -- Add in column dividers */
+table#cross_manage_crossingblock_register_crosses_form  tr th.cross_num,
+  table#cross_manage_crossingblock_register_crosses_form  tr td.cross_num {
+  border-left: 1px solid #314355;
+}
+table#cross_manage_crossingblock_register_crosses_form  tr td.type{
+  border-right: 1px solid #EFEFEF;
+}
+table#cross_manage_crossingblock_register_crosses_form  tr td.parent{
+  border-right: 1px solid #EFEFEF;
+}
+table#cross_manage_crossingblock_register_crosses_form  tr td.data {
+  border-right: 1px solid #EFEFEF;
+}
+table#cross_manage_crossingblock_register_crosses_form  tr td.notes {
+  border-right: 1px solid #EFEFEF;
+}
+table#cross_manage_crossingblock_register_crosses_form  tr th.action,
+  table#cross_manage_crossingblock_register_crosses_form  tr td.action {
+  border-right: 1px solid #314355;
+}
+
+/* -- Type/Species */
+#cross_manage_crossingblock_register_crosses_form .type .cross {
+  display: flex;
+  justify-content: space-between;
+}
+#cross_manage_crossingblock_register_crosses_form .type .cross .cross-col2 {
+  width: 110px;
+}
+table#cross_manage_crossingblock_register_crosses_form label {
+  display:inline-block;
+  text-align:right;
+  font-weight:normal;
+  font-style: italic;
+}
+.form-item-crosses-new-type label, .form-item-crosses-new-species label {
+  width: 43px;
+}
+td.type select.form-select {
+  width: 120px;
+}
+div.form-item-crosses-new-type, div.form-item-crosses-new-species {
+  width: 150px;
+}
+/* -- Parents */
+td.parent .form-type-textfield input {
+  width: 170px;
+}
+/* -- Data */
+#cross_manage_crossingblock_register_crosses_form .data input[type=text] {
+  width: 130px;
+}
+#cross_manage_crossingblock_register_crosses_form .unknown-data {
+  color: #B3B3B3;
+  font-style: italic;
+}
+#cross_manage_crossingblock_register_crosses_form .type .cross {
+  padding-top: 5px;
+}
+#cross_manage_crossingblock_register_crosses_form .type .cross .cross-col1 {
+  padding-top: 3px;
+}
+#cross_manage_crossingblock_register_crosses_form .form-item-crosses-new-data-selfed label {
+  float: left;
+  margin-right: 5px;
+  margin-left: 0;
+}
+#cross_manage_crossingblock_register_crosses_form .form-item.form-item-crosses-new-data-selfed input {
+  margin-left: 9px;
+}
+/* -- Action/Buttons */
+#cross_manage_crossingblock_register_crosses_form .action {
+  text-align: center;
+}
+#cross_manage_crossingblock_register_crosses_form .action a {
+  color: #314355;
+}
+#cross_manage_crossingblock_register_crosses_form .action img.new-page-icon {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  display: block;
+  margin: 0 20px;
+  text-align: center;
+}
+#cross_manage_crossingblock_register_crosses_form .action span.image-button {
+  margin-right: 9px;
+}
+/* -- Parental Icons */
+img.parental-icon {
+  border: 0;
+  float: left;
+}
+img.parental-icon.maternal {
+  margin-top: 4px;
+  margin-left: 2px;
+  margin-right: 3px;
+}
+img.parental-icon.paternal {
+  margin-top: 5px;
+  margin-left: 2px;
+  margin-right: 5px;
+  width: 18px;
+}
+/* -- Parent in display */
+.existing-parent {
+  display: block;
+}
+.existing-parent img.parental-icon, .existing-parent div.form-item {
+  display: inline;
+  float: none;
+}
+.existing-parent div.form-item {
+  position: relative;
+  top: -5px;
+}
+/* -- Image button Tweaks *
+span.image-button.edit-button input {
+  padding: 5px;
+  width: 20px;
+  height: 20px;  
+}*/
+
+/**
+ * Workflow Diagram
+ */
+.workflow-diagram a:link, .workflow-diagram a:visited {
+  color: #128324;
+}
+
+.workflow-diagram table th, .workflow-diagram table td {
+  width: 50%;
+  vertical-align:text-top;
+}

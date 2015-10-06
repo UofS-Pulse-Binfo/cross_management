@@ -6,7 +6,33 @@
  */
 
 /**
- *
+ * Add to cross management views.
+ */
+function cross_manage_preprocess_views_view(&$vars) {
+
+  if (preg_match('/^cb_.*/', $vars['view']->name)) {
+  
+    // Add theme-ing.
+    drupal_add_css(drupal_get_path('module', 'cross_manage') .'/theme/css/cross_manage_views.css');
+
+    // Set Breadcrumb.
+    $species = $vars['view']->args[0];
+    $cb_year = $vars['view']->args[1];
+    $cb_season = $vars['view']->args[2];
+
+    $breadcrumb = array();
+    $breadcrumb[] = l('Home', '<front>');
+    $breadcrumb[] = l('Crossing Block Management', 'crossing-block');
+    $breadcrumb[] = l($cb_season. ' ' . $cb_year, "crossing-block/$species/$cb_year/$cb_season/summary");
+    $breadcrumb[] = l($vars['view']->get_title(), base_path() . request_uri()); // Link to current URL
+
+    drupal_set_breadcrumb($breadcrumb);
+
+  }
+}
+
+/**
+ * Theme the link used to start the shepherd tours.
  */
 function theme_cross_manage_shepherd_start_tour_link() {
 
@@ -65,7 +91,24 @@ function cross_manage_preprocess_cross_manage_workflow(&$vars) {
       '@season' => $vars['crossingblock_season'],
     ));
   }
-
+  
+  // Paths to the various views (listings).
+  $vars['list_paths']['parent_list'] = 'crossing-block/@species/@year/@season/parent-list';
+  $vars['list_paths']['seed_list'] = 'crossing-block/@species/@year/@season/seed-list';
+  $vars['list_paths']['parent_labels'] = 'crossing-block/@species/@year/@season/parent-labels';
+  $vars['list_paths']['crosses_basic'] = 'crossing-block/@species/@year/@season/crosses/basic';
+  $vars['list_paths']['crosses_field'] = 'crossing-block/@species/@year/@season/crosses/field';
+  $vars['list_paths']['crosses_expanded'] = 'crossing-block/@species/@year/@season/crosses/expanded';
+  $vars['list_paths']['growouts'] = 'crossing-block/@species/@year/@season/grow-outs';
+  // Replace placeholders in paths.
+  foreach($vars['list_paths'] as $k => $path_string) {
+    $vars['list_paths'][$k] = format_string($path_string, array(
+      '@species' => $vars['crossingblock_species'],
+      '@year' => $vars['crossingblock_year'],
+      '@season' => $vars['crossingblock_season'],
+    ));
+  }
+  
   // Set the steps based on where we are in the workflow.
   // @TODO: Make dynamic.
   $vars['form_steps']['step1']['complete'] = TRUE;

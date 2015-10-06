@@ -151,8 +151,32 @@ function cross_manage_theme($existing, $type, $theme, $path) {
     'render element' => 'element',
     'function' => 'theme_cross_manage_crossingblock_marker_entry'
   );
+  
+  $items['views_view_table__cb_planned_crosses'] = array(
+  	'arguments' => array(
+			'view' => NULL, 
+			'title' => NULL, 
+			'header' => NULL, 
+			'fields' => NULL, 
+			'class' => NULL, 
+			'row_classes' => NULL, 
+			'rows' => NULL
+		),
+		'template' => 'views-view-table--cb-planned-crosses',
+		'base hook' => 'views_view_table',
+		'path' => drupal_get_path('module', 'cross_manage') . '/theme/templates',
+  );
 
   return $items;
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function cross_manage_views_api() {
+  return array(
+    'api' => 3,
+  );
 }
 
 /**

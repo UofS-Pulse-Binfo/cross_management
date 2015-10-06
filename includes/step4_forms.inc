@@ -59,7 +59,7 @@ function cross_manage_crossingblock_assign_cross_num_form($form, $form_state) {
   $form['#attached'] = array(
     'css' => array(
       'type' => 'file',
-      'data' => $crossmanage_path . '/theme/css/cross_manage.css',
+      'data' => $crossmanage_path . '/theme/css/cross_manage_forms.css',
     ),
   );
   $form['#attached']['js'][] = $crossmanage_path . '/theme/js/CrossManage_highlightErrorRow.js';
