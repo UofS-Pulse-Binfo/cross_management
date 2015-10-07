@@ -228,7 +228,7 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
       '#default_value' => $line,
       '#description' => $details,
       '#size' => 35,
-      '#required' => TRUE,
+      //'#required' => TRUE, * Only Required on add parent thus must check ourselves.
       '#autocomplete_path' => 'tripal_ajax/cross_manage/stock_name/'.$form_state['build_info']['args'][0]
     );
 
@@ -237,7 +237,7 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
       //'#title' => 'Source',
       '#default_value' => $source,
       '#size' => 35,
-      '#required' => TRUE,
+      //'#required' => TRUE, * Only Required on add parent thus must check ourselves.
     );
 
     $form['parents'][$pid]['notes'] = array(
@@ -514,6 +514,34 @@ function cross_manage_crossingblock_set_cross_parents_form_validate($form, &$for
     }
   }
 
+
+  // VALIDATE: If the user clicked the "Add Parent" button then we need to ensure
+  // the line/source are filled in but if a different button is pressed we need to
+  // overlook the empty line/source.
+  if ($form_state['clicked_button']['#value'] == 'Add Parent') {
+    if (empty($form_state['values']['parents']['new']['line'])) {
+      form_set_error('parents][new][line', 'The line is required to add a new parent.');
+    }
+    if (empty($form_state['values']['parents']['new']['source'])) {
+      form_set_error('parents][new][source', 'The source is required to add a new parent.');
+    }
+  }
+  // If BOTH are missing then we can just ignore the parent since it's not filled in.
+  elseif (empty($form_state['values']['parents']['new']['line'])
+        AND empty($form_state['values']['parents']['new']['source'])) {
+
+      unset($form_state['values']['parents']['new']);
+  }
+  // Otherwise, maybe they didn't realize the line/source are required?
+  else {
+    if (empty($form_state['values']['parents']['new']['line'])) {
+      form_set_error('parents][new][line', 'The line of the new parent needs to be entered before it can be saved. If you did not intend to add a new parent before submitting your crossing plans then delete it.');
+    }
+    if (empty($form_state['values']['parents']['new']['source'])) {
+      form_set_error('parents][new][source', 'The source of the new parent needs to be entered before it can be saved. If you did not intend to add a new parent before submitting your crossing plans then delete it.');
+    }
+  }
+
 }
 
 /**
@@ -670,7 +698,7 @@ function ajax_parents_add_row_callback($form, $form_state) {
 function ajax_parents_cross_to_callback($form, $form_state) {
   // Determine the row for which AJACX was triggered.
   $pid = $form_state['triggering_element']['#array_parents'][1];
-  
+
   // Save the current crosses.
   //dpm($form_state, 'AJAX: form state');
   foreach($form_state['values']['parents'][$pid]['cross_to'] as $paternal_pid) {
@@ -686,13 +714,13 @@ function ajax_parents_cross_to_callback($form, $form_state) {
       }
     }
   }
-  
+
   // Remove any crosses with the current maternal parent that are not specified in the form.
   db_delete('cross_manage_planned_crosses')
     ->condition('maternal_parent_id', $pid)
     ->condition('paternal_parent_id',$form_state['values']['parents'][$pid]['cross_to'], 'NOT IN')
     ->execute();
-    
+
   // Return the part of the form we want to render.
   // This is the cell in "Cross to" column for the row specified by $pid.
   return $form['parents'][$pid]['cross_to'];
