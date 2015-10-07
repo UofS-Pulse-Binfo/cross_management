@@ -30,17 +30,6 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
         '@season' => $cb_season,
     )));
 
-    $highlight_options = array(
-      'market_class' => 'Market Class'
-    );
-
-    // What to highlight the rows based on
-    $highlight_detail = 'market_class';
-
-    $marker_data_avail = FALSE;
-    if (isset($form_state['build_info']['args']['markers_screened'])) {
-      $marker_data_avail = TRUE;
-    }
   }
   else {
     drupal_set_message('Unable to determine the current crossing block', 'error');
@@ -88,33 +77,19 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
 
   // FORM PROPER:
   //--------------------------
-/**
-  $form['highlight'] = array(
-    '#type' => 'fieldset',
-    '#title' => 'Row Highlight'
-  );
 
-  $form['highlight']['highlight_select'] = array(
-    '#type' => 'select',
-    '#title' => 'Highlight Row',
-    '#description' => 'Select the detail you wish to highlight the rows based on.',
-    '#options' => $highlight_options,
-    '#default_value' => $highlight_detail,
-    '#prefix' => '<span class="cross-parents highlight highlight-select">',
-    '#suffix' => '</span>'
-  );
-
-  $form['highlight']['highlight_key'] = array(
+  // The breeders want a quick way to communicate with the Field Lab on the crossing
+  // plans. The idea is this element will provide a quick little summary to allow
+  // the breeder's to double check their crossing plans before they decide to submit
+  // them to the field lab. Actual submission will likely occur in an overlay or
+  // another tab. Right now I'm just adding a placeholder for this since it needs
+  // additional discussion on what should be here...
+  // One final note, this is replacing the "Submit Crossing Plans" button that
+  // was initially designed in order to make the number of buttons less confusing.
+  $form['summary+send2lab'] = array(
     '#type' => 'markup',
-    '#markup' => "<table>
-                    <caption><strong>Highlight Colour Key</strong></caption>
-                    <tr><td class='highlight-key Small-Red'></td><td>Small Red</td></tr>
-                    <tr><td class='highlight-key French-Green'></td><td>French Green</td></tr>
-                  </table>",
-    '#prefix' => '<span class="cross-parents highlight highlight-key">',
-    '#suffix' => '</span>'
+    '#value' => ''
   );
-*/
 
   // Begin parents table
   $parents_wrapper = 'parents-table';
@@ -194,18 +169,8 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
       $instructions = '';
     }
 
-    $highlight_class = 'no-highlight';
-    if (isset($opt['details'][$highlight_detail])) {
-      $highlight_class = str_replace(' ','-', $opt['details'][$highlight_detail]['value']);
-    }
-
     $form['parents'][$pid] = array(
       '#type' => 'markup',
-    );
-
-    $form['parents'][$pid]['highlight_class'] = array(
-      '#type' => 'item',
-      '#value' => $highlight_class
     );
 
     $form['parents'][$pid]['pnum'] = array(
@@ -331,9 +296,9 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
     '#suffix' => '</span>',
   );
 
-  $form['submit-cb'] = array(
+  $form['save'] = array(
     '#type' => 'submit',
-    '#value' => 'Submit Crossing Plans',
+    '#value' => 'Save Changes',
   );
 
   return $form;
