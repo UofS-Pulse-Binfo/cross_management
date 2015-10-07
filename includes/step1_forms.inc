@@ -785,6 +785,22 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
       ':species' => $species
   ))->fetchAll();
 
+  // dpm($f1s, 'f1s');
+
+  // Check that we were able to determine the previous crossing block...
+  if (empty($f1s)) {
+
+    $form['error'] = array(
+      '#type' => 'markup',
+      '#markup' => '<div class="messages error">
+                    <h2 class="element-invisible">Error message</h2>
+                    Unable to determine the previous crossing block. Please contact the administrator.
+                  </div>'
+    );
+
+    return $form;
+  }
+
   // Set Page Title
   $species = str_replace('-',' ',$form_state['build_info']['args'][0]);
   $cb_year = $form_state['build_info']['args'][1];
