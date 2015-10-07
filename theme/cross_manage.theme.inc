@@ -11,7 +11,7 @@
 function cross_manage_preprocess_views_view(&$vars) {
 
   if (preg_match('/^cb_.*/', $vars['view']->name)) {
-  
+
     // Add theme-ing.
     drupal_add_css(drupal_get_path('module', 'cross_manage') .'/theme/css/cross_manage_views.css');
 
@@ -91,7 +91,7 @@ function cross_manage_preprocess_cross_manage_workflow(&$vars) {
       '@season' => $vars['crossingblock_season'],
     ));
   }
-  
+
   // Paths to the various views (listings).
   $vars['list_paths']['parent_list'] = 'crossing-block/@species/@year/@season/parent-list';
   $vars['list_paths']['seed_list'] = 'crossing-block/@species/@year/@season/seed-list';
@@ -108,7 +108,7 @@ function cross_manage_preprocess_cross_manage_workflow(&$vars) {
       '@season' => $vars['crossingblock_season'],
     ));
   }
-  
+
   // Set the steps based on where we are in the workflow.
   // @TODO: Make dynamic.
   $vars['form_steps']['step1']['complete'] = TRUE;
@@ -154,7 +154,7 @@ function theme_cross_manage_crossingblock_parents($vars) {
       );
 
       $row['data'][] = $cell;
-      $row['class'] = array('cross-parents-row', 'draggable', $element[$key]['highlight_class']['#value']); // needed for table dragging
+      $row['class'] = array('cross-parents-row', 'draggable'); // needed for table dragging
       if (sizeof($rows) == 0) {
         $row['class'][] = 'first';
       }
@@ -266,7 +266,7 @@ function theme_cross_manage_crossingblock_marker_entry($vars) {
  */
 function theme_cross_manage_crossingblock_register_crosses($vars) {
   $element = $vars['element'];
-  
+
   $header = array(
     'cross_num' => array('data' => 'Cross Number', 'class' => 'cross_num_col'),
     'type' => array('data' => 'Resulting Cross', 'class' => 'type'),
@@ -289,7 +289,7 @@ function theme_cross_manage_crossingblock_register_crosses($vars) {
       'data' => drupal_render($element[$key]['cross_num']),
       'class' => array('register-crosses', 'cross-cell', 'cross_num'),
     );
-    
+
     // -- Resulting Cross.
     $cell = '<div class="cross">'
             .'<div class="cross-col1">'
@@ -304,35 +304,35 @@ function theme_cross_manage_crossingblock_register_crosses($vars) {
       'data' => $cell,
       'class' => array('register-crosses', 'cross-cell', 'type'),
     );
-    
+
     // -- Parents.
-    $cell = drupal_render($element[$key]['maternal_parent_icon']) 
+    $cell = drupal_render($element[$key]['maternal_parent_icon'])
               . drupal_render($element[$key]['maternal_parent'])
-          . drupal_render($element[$key]['paternal_parent_icon']) 
+          . drupal_render($element[$key]['paternal_parent_icon'])
               . drupal_render($element[$key]['paternal_parent']);
     $rows[$i]['data']['parent'] = array(
       'data' => $cell,
       'class' => array('register-crosses', 'cross-cell', 'parent'),
     );
-    
+
     // -- Characteristics.
     $rows[$i]['data']['data'] = array(
       'data' => drupal_render($element[$key]['data']),
       'class' => array('register-crosses', 'cross-cell', 'data'),
     );
-    
+
     // -- Notes.
     $rows[$i]['data']['notes'] = array(
       'data' => drupal_render($element[$key]['notes']),
       'class' => array('register-crosses', 'cross-cell', 'notes'),
     );
-    
+
     // -- Action.
     $rows[$i]['data']['action'] = array(
       'data' => drupal_render($element[$key]['action']),
       'class' => array('register-crosses', 'cross-cell', 'action'),
     );
-    
+
     // Add classes for the current row.
     $rows[$i]['class'] = array('register-crosses-row', 'draggable');
     if ($i == 0) {
@@ -341,7 +341,7 @@ function theme_cross_manage_crossingblock_register_crosses($vars) {
     if ($i == (sizeof($children)-1)) {
       $rows[$i]['class'][] = 'last';
     }
-    
+
     $i++;
   }
 
