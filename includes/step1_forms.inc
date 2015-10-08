@@ -713,6 +713,10 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
     return $form;
   }
 
+  // Figure out some variables and save for use in validate/submit.
+  // Seed procudes is saved as a stock property therefore we need the type_id.
+  $form_state['storage']['seed_num']['type_id'] = '3973';
+
 	// Set Breadcrumb:
 	//--------------------------
 	$breadcrumb = array();
@@ -779,7 +783,7 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
     WHERE cb_year=:year AND cb_season=:season AND cb_species=:species AND parent_number='F1'
     ORDER BY parent_number",
     array(
-      'seeds_type_id' => '3973',
+      'seeds_type_id' => $form_state['storage']['seed_num']['type_id'],
       ':year' => $cb_year,
       ':season' => $cb_season,
       ':species' => $species
@@ -883,6 +887,11 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
     $form['f1'][$pid]['cross_name'] = array(
       '#type' => 'hidden',
       '#value' => $parent->name,
+    );
+
+    $form['f1'][$pid]['stock_id'] = array(
+      '#type' => 'hidden',
+      '#value' => $parent->stock_id,
     );
 
     $form['f1'][$pid]['type'] = array(
@@ -1027,7 +1036,7 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
  */
 function cross_manage_crossingblock_set_cross_f1s_form_validate($form, &$form_state) {
 
-  dpm($form_state['values']['f1'], "form_state");
+  //dpm($form_state['values'], "Form State: Validate.");
 
   // We are going to need to validate for duplicate line/source parents. In
   // order to avoid a nested loop situation we are going to keep track
@@ -1142,21 +1151,30 @@ function cross_manage_crossingblock_set_cross_f1s_form_submit($form, $form_state
 
   $form_state['rebuild'] = TRUE;
 
+  //dpm($form_state['values'], "Form State: Submit.");
+
   // Iterate through each f1 since we want to save all changes
   foreach (element_children($form_state['values']['f1']) as $pid) {
 
-    // Table: cross_manage_parents
-    // Keep track of simple form elements for each cross - we don't need cross name or type
-    // since these cannot be changed in the form
-    $f1_record = array(
-      'cb_parent_id' => $pid,
-      'seed_num' => $form_state['values']['f1'][$pid]['seed_num'],
-      'seedc' => $form_state['values']['f1'][$pid]['seed_allocate']['cross'],
-      'seedr' => $form_state['values']['f1'][$pid]['seed_allocate']['reserve'],
-      'seedg' => $form_state['values']['f1'][$pid]['seed_allocate']['grow-out'],
-    );
+    // First we need to save the amount of seed produced if they've just entered it.
+    if (!empty($form_state['values']['f1'][$pid]['seed_num'])) {
+      $record = array(
+        'stock_id' => $form_state['values']['f1'][$pid]['stock_id'],
+        'type_id' => $form_state['storage']['seed_num']['type_id'],
+        'value' => $form_state['values']['f1'][$pid]['seed_num'],
+      );
 
-    // Seed Allocations.
+      $exists = chado_query('SELECT true FROM {stockprop} WHERE stock_id=:id AND type_id=:type',
+        array('id' => $record['stock_id'], ':type' => $record['type_id']))->fetchField();
+      // We only want to save it if it hasn't already been saved. Don't update since
+      // we don't want this value easily changed. The form should restrict updating as
+      // well. The user should be encouraged to update this field through the stock.
+      if (!$exists) {
+        chado_insert_record('stockprop', $record);
+      }
+    }
+
+    // Next, we want to save the Seed Allocations.
     foreach (array('cross', 'reserve', 'grow-out') as $type) {
       if (!empty($form_state['values']['f1'][$pid]['seed_allocate'][$type])) {
         $record = array(
@@ -1175,7 +1193,6 @@ function cross_manage_crossingblock_set_cross_f1s_form_submit($form, $form_state
       }
     }
 
-    // Table: cross_manage_planned_crosses
     // Keeps track of each cross that is planned, ie. stores each maternal/paternal parent
     // cross specified in the "Cross To" drop-downs.
     foreach ($form_state['values']['f1'][$pid]['cross_to'] as $pat_pid) {
@@ -1213,11 +1230,10 @@ function cross_manage_crossingblock_set_cross_f1s_form_submit($form, $form_state
           array(':mat' => $f1_record['cb_parent_id'], ':pats' => $form_state['values']['f1'][$pid]['cross_to']))->fetchAll();
     }
 
-    // Table: cross_manage_notes.
-    // Keeps track of breeder's notes and instructions.
+    // And Finally, Keep track of breeder's notes and instructions.
     if (!empty($form_state['values']['f1'][$pid]['notes']['breeder_notes'])) {
       $selfnote_record = array(
-        'cb_parent_id' => $f1_record['cb_parent_id'],
+        'cb_parent_id' => $pid,
         'type' => 'breeder_selfnote',
         'value' => $form_state['values']['f1'][$pid]['notes']['breeder_notes'],
       );
@@ -1238,7 +1254,7 @@ function cross_manage_crossingblock_set_cross_f1s_form_submit($form, $form_state
     }
     if (!empty($form_state['values']['f1'][$pid]['notes']['instructions'])) {
       $instruct_record = array(
-        'cb_parent_id' => $f1_record['cb_parent_id'],
+        'cb_parent_id' => $pid,
         'type' => 'fieldlab_instruction',
         'value' => $form_state['values']['f1'][$pid]['notes']['instructions']
       );
