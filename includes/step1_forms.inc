@@ -310,8 +310,6 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
   */
 function cross_manage_crossingblock_set_cross_parents_form_validate($form, &$form_state) {
 
-  //dpm($form_state, 'VALIDATE: form state');
-
   // We are going to need to validate for duplicate line/source parents. In
   // order to avoid a nested loop situation we are going to keep track
   // of parent line/source combinations in the following array and then check
@@ -451,7 +449,7 @@ function cross_manage_crossingblock_set_cross_parents_form_validate($form, &$for
               // drupal messages. Therefore, warn the user on AJAX about the
               // duplication.
               if (isset($form_state['triggering_element']['#ajax'])) {
-                drupal_set_message($message, 'warning');;
+                drupal_set_message($message, 'error');;
               }
             }
           }
@@ -518,8 +516,6 @@ function cross_manage_crossingblock_set_cross_parents_form_validate($form, &$for
 function cross_manage_crossingblock_set_cross_parents_form_submit(&$form, &$form_state) {
 
   $form_state['rebuild'] = TRUE;
-
- //dpm($form_state, 'SUBMIT: Form State');
 
   // Regardless we want to save all the changes.
   foreach (element_children($form_state['values']['parents']) as $pid) {
@@ -661,11 +657,10 @@ function ajax_parents_add_row_callback($form, $form_state) {
  * of the form for that row.
  */
 function ajax_parents_cross_to_callback($form, $form_state) {
-  // Determine the row for which AJACX was triggered.
+  // Determine the row for which AJAX was triggered.
   $pid = $form_state['triggering_element']['#array_parents'][1];
 
   // Save the current crosses.
-  //dpm($form_state, 'AJAX: form state');
   foreach($form_state['values']['parents'][$pid]['cross_to'] as $paternal_pid) {
     if (!empty($pid) AND !empty($paternal_pid)) {
       $exists = db_query('SELECT true FROM {cross_manage_planned_crosses} WHERE maternal_parent_id=:mat AND paternal_parent_id=:pat',
@@ -789,8 +784,6 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
       ':species' => $species
   ))->fetchAll();
 
-  // dpm($f1s, 'f1s');
-
   // Check that we were able to determine the previous crossing block...
   if (empty($f1s)) {
 
@@ -852,7 +845,7 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
   foreach ($f1s as $i => $parent) {
 
     // DEFAULTS:
-    $has_form_state = (isset($form_state['values']['parents'])) ? TRUE : FALSE;
+    $has_form_state = (isset($form_state['values']['f1'])) ? TRUE : FALSE;
     $pid = $parent->cb_parent_id;
 
     $seed_cross = ($has_form_state) ? $form_state['values']['f1'][$pid]['seed_allocate']['cross'] : $parent->seed_cross;
@@ -1036,8 +1029,6 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
  */
 function cross_manage_crossingblock_set_cross_f1s_form_validate($form, &$form_state) {
 
-  //dpm($form_state['values'], "Form State: Validate.");
-
   // We are going to need to validate for duplicate line/source parents. In
   // order to avoid a nested loop situation we are going to keep track
   // of parent line/source combinations in the following array and then check
@@ -1050,6 +1041,7 @@ function cross_manage_crossingblock_set_cross_f1s_form_validate($form, &$form_st
 
     // Things to validate: cross_name with each cross_to, seed allocation is numerical & >0, notes
 
+    // Validate cross to fields.
     if (isset($form_state['values']['f1'][$pid]['cross_to'])) {
 
       // VALIDATE: Ensure the user hasn't crossed the parent to itself.
@@ -1087,7 +1079,6 @@ function cross_manage_crossingblock_set_cross_f1s_form_validate($form, &$form_st
       // crosses then one of them must have been duplicated. Furthermore, we can
       // now search through the counts to find the duplicated cross number.
       $cross_count = array_count_values($form_state['values']['f1'][$pid]['cross_to']);
-      //dpm($cross_count, "cross_count");
 
       if (sizeof($form_state['values']['f1'][$pid]['cross_to']) !== sizeof($cross_count)) {
 
@@ -1097,8 +1088,6 @@ function cross_manage_crossingblock_set_cross_f1s_form_validate($form, &$form_st
         // We use array_filter with a callback to ensure we catch instances
         // where the user has selected the same parent 2+ times.
         $duplicated_pids = array_filter($cross_count, 'cross_manage_filter_keep_2plus', ARRAY_FILTER_USE_BOTH);
-
-        //dpm($duplicated_pids, "dup_pids");
 
         // For each duplicated parent number, alert the user.
         foreach($duplicated_pids as $dup_pid => $count) {
@@ -1134,12 +1123,19 @@ function cross_manage_crossingblock_set_cross_f1s_form_validate($form, &$form_st
               }
               form_set_error('f1][' . $pid . '][cross_to][' . $id, $message);
 
+              // For some reason we don't see form errors on AJAX but we do see
+              // drupal messages. Therefore, warn the user on AJAX about the
+              // duplication.
+              if (isset($form_state['triggering_element']['#ajax'])) {
+                drupal_set_message($message, 'error');
+              }
             }
           }
         }
       }
     }
   }
+
 }
 
 /**
@@ -1147,11 +1143,9 @@ function cross_manage_crossingblock_set_cross_f1s_form_validate($form, &$form_st
  *
  * Implements hook_form_submit().
  */
-function cross_manage_crossingblock_set_cross_f1s_form_submit($form, $form_state) {
+function cross_manage_crossingblock_set_cross_f1s_form_submit($form, &$form_state) {
 
   $form_state['rebuild'] = TRUE;
-
-  //dpm($form_state['values'], "Form State: Submit.");
 
   // Iterate through each f1 since we want to save all changes
   foreach (element_children($form_state['values']['f1']) as $pid) {
@@ -1200,7 +1194,7 @@ function cross_manage_crossingblock_set_cross_f1s_form_submit($form, $form_state
 
       if ($pat_pid != 0) {
         $cross_record = array(
-          'maternal_parent_id' => $f1_record['cb_parent_id'],
+          'maternal_parent_id' => $pid,
           'paternal_parent_id' => $pat_pid,
         );
 
@@ -1227,7 +1221,7 @@ function cross_manage_crossingblock_set_cross_f1s_form_submit($form, $form_state
     // where the paternal parent is not in the cross_to list.
     if (sizeof($form_state['values']['f1'][$pid]['cross_to']) > 1) {
       db_query('DELETE FROM {cross_manage_planned_crosses} WHERE maternal_parent_id=:mat AND paternal_parent_id NOT IN (:pats)',
-          array(':mat' => $f1_record['cb_parent_id'], ':pats' => $form_state['values']['f1'][$pid]['cross_to']))->fetchAll();
+          array(':mat' => $pid, ':pats' => $form_state['values']['f1'][$pid]['cross_to']))->fetchAll();
     }
 
     // And Finally, Keep track of breeder's notes and instructions.
@@ -1288,9 +1282,33 @@ function cross_manage_crossingblock_set_cross_f1s_form_submit($form, $form_state
  * of the form for that row.
  */
 function ajax_f1_cross_to_callback($form, $form_state) {
-  $cross_num = $form_state['triggering_element']['#array_parents'][1];
-  return $form['f1'][$cross_num]['cross_to'];
-  dpm($form, "form");
+  // Determine the row for which AJAX was triggered.
+  $pid = $form_state['triggering_element']['#array_parents'][1];
+
+  // Save the current crosses.
+  foreach($form_state['values']['f1'][$pid]['cross_to'] as $paternal_pid) {
+    if (!empty($pid) AND !empty($paternal_pid)) {
+      $exists = db_query('SELECT true FROM {cross_manage_planned_crosses} WHERE maternal_parent_id=:mat AND paternal_parent_id=:pat',
+        array(':mat' => $pid, ':pat' => $paternal_pid))->fetchField();
+      if (!$exists) {
+        $cross = array(
+          'maternal_parent_id' => $pid,
+          'paternal_parent_id' => $paternal_pid
+        );
+        drupal_write_record('cross_manage_planned_crosses', $cross);
+      }
+    }
+  }
+
+  // Remove any crosses with the current maternal parent that are not specified in the form.
+  db_delete('cross_manage_planned_crosses')
+    ->condition('maternal_parent_id', $pid)
+    ->condition('paternal_parent_id',$form_state['values']['f1'][$pid]['cross_to'], 'NOT IN')
+    ->execute();
+
+  // Return the part of the form we want to render.
+  // This is the cell in "Cross to" column for the row specified by $pid.
+  return $form['f1'][$pid]['cross_to'];
 }
 
 /**
