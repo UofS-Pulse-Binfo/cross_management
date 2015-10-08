@@ -775,7 +775,7 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
     LEFT JOIN {cross_manage_notes} instruct ON instruct.cb_parent_id=p.cb_parent_id AND instruct.type='fieldlab_instruction'
     LEFT JOIN {cross_manage_seed_allocation} seedc ON seedc.cb_parent_id=p.cb_parent_id AND seedc.type='cross'
     LEFT JOIN {cross_manage_seed_allocation} seedr ON seedr.cb_parent_id=p.cb_parent_id AND seedr.type='reserve'
-    LEFT JOIN {cross_manage_seed_allocation} seedg ON seedg.cb_parent_id=p.cb_parent_id AND seedg.type='growout'
+    LEFT JOIN {cross_manage_seed_allocation} seedg ON seedg.cb_parent_id=p.cb_parent_id AND seedg.type='grow-out'
     WHERE cb_year=:year AND cb_season=:season AND cb_species=:species AND parent_number='F1'
     ORDER BY parent_number",
     array(
@@ -1155,6 +1155,25 @@ function cross_manage_crossingblock_set_cross_f1s_form_submit($form, $form_state
       'seedr' => $form_state['values']['f1'][$pid]['seed_allocate']['reserve'],
       'seedg' => $form_state['values']['f1'][$pid]['seed_allocate']['grow-out'],
     );
+
+    // Seed Allocations.
+    foreach (array('cross', 'reserve', 'grow-out') as $type) {
+      if (!empty($form_state['values']['f1'][$pid]['seed_allocate'][$type])) {
+        $record = array(
+          'cb_parent_id' => $pid,
+          'type' => $type,
+          'value' => $form_state['values']['f1'][$pid]['seed_allocate'][$type]
+        );
+        $exists = db_query('SELECT true FROM {cross_manage_seed_allocation} WHERE cb_parent_id=:id AND type=:type',
+          array('id' => $record['cb_parent_id'], ':type' => $record['type']))->fetchField();
+        if ($exists) {
+          drupal_write_record('cross_manage_seed_allocation', $record, array('cb_parent_id', 'type'));
+        }
+        else {
+          drupal_write_record('cross_manage_seed_allocation', $record);
+        }
+      }
+    }
 
     // Table: cross_manage_planned_crosses
     // Keeps track of each cross that is planned, ie. stores each maternal/paternal parent
