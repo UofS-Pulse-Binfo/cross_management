@@ -24,7 +24,7 @@ Drupal.behaviors.crossmanageRegisterCrossesProgress = {
     // total length of the bar when complete.
     var totalExpected = Drupal.settings.crossManage.expected;
     var total = totalExpected + incorrect;
-debugger;
+
     // Finally, we need to determine the scale for the
     // progressbar based on the total count and the
     // size of our canvas.
