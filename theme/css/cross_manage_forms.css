@@ -91,9 +91,11 @@ span.image-button.odd-table-well input.form-submit:active {
 /**
  * Crossing Management Table Forms
  */
-table.cross-manage-table-form tr.even.error-row td, 
-  table.cross-manage-table-form tr.odd.error-row td {
-    background-color: #FEEBEB;
+table.cross-manage-table-form tr.even.error-row td {
+  background-color: #FEEBEB;
+}
+table.cross-manage-table-form tr.odd.error-row td {
+  background-color: #FEF5F2;
 }
 table.cross-manage-table-form  tr.even td {
   background: #F5F5F5;
