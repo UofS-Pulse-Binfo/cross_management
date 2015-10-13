@@ -77,6 +77,20 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
 
   // FORM PROPER:
   //--------------------------
+  
+  // NOTE: This can't be done via AJAX because we need to save parents to the
+  // database & thus we NEED validation.
+  $form['add-row-top'] = array(
+    '#type' => 'submit',
+    '#value' => 'Add Parent',
+    '#prefix' => '<span class="cross-parents add-more">',
+    '#suffix' => '</span>',
+  );
+
+  $form['save-top'] = array(
+    '#type' => 'submit',
+    '#value' => 'Save Changes',
+  );
 
   // The breeders want a quick way to communicate with the Field Lab on the crossing
   // plans. The idea is this element will provide a quick little summary to allow
@@ -289,14 +303,14 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
 
   // NOTE: This can't be done via AJAX because we need to save parents to the
   // database & thus we NEED validation.
-  $form['add-row'] = array(
+  $form['add-row-bottom'] = array(
     '#type' => 'submit',
     '#value' => 'Add Parent',
     '#prefix' => '<span class="cross-parents add-more">',
     '#suffix' => '</span>',
   );
 
-  $form['save'] = array(
+  $form['save-bottom'] = array(
     '#type' => 'submit',
     '#value' => 'Save Changes',
   );
@@ -826,6 +840,11 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
     '#markup' => theme('cross_manage_shepherd_start_tour_link')
   );
 
+  $form['save-f1-top'] = array(
+    '#type' => 'submit',
+    '#value' => 'Save Progress',
+  );
+  
   // Set the cross-to options - first value is blank so the drop-down is initially blank
   $parent_options = cross_manage_get_parent_options($species, $cb_year, $cb_season);
 
@@ -1009,15 +1028,9 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
     }
   }
 
-  // Should type here be button?
-  $form['save-f1'] = array(
+  $form['save-f1-bottom'] = array(
     '#type' => 'submit',
     '#value' => 'Save Progress',
-  );
-
-  $form['submit-f1'] = array(
-    '#type' => 'submit',
-    '#value' => 'Send to Field Lab',
   );
 
   return $form;

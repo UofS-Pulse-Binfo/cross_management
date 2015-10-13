@@ -210,6 +210,10 @@ table#cross_manage_crossingblock_parents_form  tr th.notes,
 .cross-parents.add-more {
   float: right;
 }
+/* -- Ensure the top save changes button is at the same height as the add-more button. */
+#edit-save-top {
+  margin-top: 43px;
+}
 
 /**
  * Plan Crosses: F1s Form
