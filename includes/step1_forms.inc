@@ -59,14 +59,11 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
 
   // Add Shepherd Site Tour
   //--------------------------
-  $shepherd_path = libraries_get_path('shepherd');
-  $form['#attached']['js'][] = $shepherd_path . '/shepherd.min.js';
-  $form['#attached']['js'][] = $crossmanage_path . '/theme/js/CrossManage_Parentsform_ShepherdTour.js';
-  $form['#attached']['css'][] = $shepherd_path .'/css/shepherd-theme-arrows.css';
-  $form['#attached']['css'][] = array(
-    'data' => $crossmanage_path . '/theme/css/crossmanage_shepherd_tour.css',
-    'weight' => 10
-  );
+  libraries_load('tether');
+  libraries_load('shepherd');
+  $form['#attached']['css'][] = drupal_get_path('theme','kptheme').'/css/shepherd_tour.css';
+  $form['#attached']['js'][] = drupal_get_path('module', 'cross_manage') . '/theme/js/CrossManage_Parentsform_ShepherdTour.js';
+
 
   // Add site tour link.
   //--------------------------
@@ -77,15 +74,6 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
 
   // FORM PROPER:
   //--------------------------
-  
-  // NOTE: This can't be done via AJAX because we need to save parents to the
-  // database & thus we NEED validation.
-  $form['add-row-top'] = array(
-    '#type' => 'submit',
-    '#value' => 'Add Parent',
-    '#prefix' => '<span class="cross-parents add-more">',
-    '#suffix' => '</span>',
-  );
 
   $form['save-top'] = array(
     '#type' => 'submit',
@@ -297,6 +285,39 @@ function cross_manage_crossingblock_set_cross_parents_form($form, &$form_state) 
           'callback' => 'ajax_parents_cross_to_callback',
           'wrapper' => $cross_to_wrapper,
         ),
+      );
+    }
+
+    // Action Button.
+    // If this is the last row then we want the add button.
+    if ($i == $num_rows) {
+      $form['parents'][$pid]['action'] = array(
+        '#type' => 'image_button',
+        '#value' => 'Add Cross',
+        //'#src' => $plus_icon,
+        '#src' => drupal_get_path('module', 'cross_manage') . '/theme/images/add-button.png',
+        '#prefix' => '<span class="cross-parents add-more image-button green-button dark-well">',
+        '#suffix' => '</span>',
+      );
+    }
+    // Otherwise, we want the remove as parent link.
+    elseif (isset($parents[$i]->nid)) {
+
+      $img = theme_image(array(
+        'path' => drupal_get_path('module','cross_manage').'/theme/images/remove-button-x.png',
+        'title' => 'Remove this parent from the Crossing Block.',
+        'alt' => 'Remove Parent',
+      'attributes' => array('class' => 'remove-icon')
+      ));
+      $form['parents'][$pid]['action'] = array(
+        '#type' => 'markup',
+        '#markup' =>  l($img . 'remove', 'node/'.$parents[$i]->nid.'/edit', array('html' => TRUE, 'attributes' => array('target' => '_blank'))),
+      );
+    }
+    else {
+      $form['parents'][$pid]['action'] = array(
+        '#type' => 'markup',
+        '#markup' =>  ' ',
       );
     }
   }
@@ -823,15 +844,11 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
 
   // Add Shepherd Site Tour
   //--------------------------
-  $crossmanage_path = drupal_get_path('module', 'cross_manage');
-  $shepherd_path = libraries_get_path('shepherd');
-  $form['#attached']['js'][] = $shepherd_path . '/shepherd.min.js';
-  $form['#attached']['js'][] = $crossmanage_path . '/theme/js/CrossManage_F1form_ShepherdTour.js';
-  $form['#attached']['css'][] = $shepherd_path .'/css/shepherd-theme-arrows.css';
-  $form['#attached']['css'][] = array(
-    'data' => $crossmanage_path . '/theme/css/crossmanage_shepherd_tour.css',
-    'weight' => 10
-  );
+  libraries_load('tether');
+  libraries_load('shepherd');
+  $form['#attached']['css'][] = drupal_get_path('theme','kptheme').'/css/shepherd_tour.css';
+  $form['#attached']['js'][] = drupal_get_path('module', 'cross_manage') . '/theme/js/CrossManage_F1form_ShepherdTour.js';
+
 
   // Add site tour link.
   //--------------------------
@@ -844,7 +861,7 @@ function cross_manage_crossingblock_set_cross_f1s_form($form, &$form_state) {
     '#type' => 'submit',
     '#value' => 'Save Progress',
   );
-  
+
   // Set the cross-to options - first value is blank so the drop-down is initially blank
   $parent_options = cross_manage_get_parent_options($species, $cb_year, $cb_season);
 

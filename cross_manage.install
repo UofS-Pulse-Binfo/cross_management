@@ -5,6 +5,45 @@
  */
 
 /**
+ * Implements hook_install().
+ */
+function cross_manage_install() {
+
+  // Add cvterms for stock properties.
+  // retrieve the cv_id for the stock properties cv.
+  $cv = tripal_get_default_cv('stockprop','type_id');
+  if ($cv) {
+    $properties = array(
+      'crossingblock_year' => 'Indicates that the current stock was the progeny of a cross made in the year specified.',
+      'crossingblock_season' => 'Indicates that the current stock was the progeny of a cross made in the season specified.',
+      'number_seeds_produced' => 'The number of seeds produced from the original cross.',
+      'cotyledon_colour' => 'The colour of the cotyledon.',
+      'seed_coat_colour' => 'The colour of the seed coat.',
+      'self_pollination' => 'Whether or not self-polination is suspected.',
+      'comment' => 'A free-text comment on the stock/germplasm.',
+    );
+    foreach ($properties as $name => $defn) {
+      tripal_insert_cvterm(array(
+        'id' => 'tripal:'.$name,
+        'name' => $name,
+        'definition' => $defn,
+        'cv_name' => $cv->name,
+      ));
+    }
+  }
+  else {
+    // UNABLE TO DETERMINE STOCK PROPERTIES CV
+  }
+}
+
+/**
+ * Implements hook_enable().
+ */
+function cross_manage_enable() {
+  drupal_set_message('Requires the JQuery UI installed via the libraries api', 'warning');
+}
+
+/**
  * Implements hook_schema().
  *
  * Create Drupal database tables for storing application-specific data

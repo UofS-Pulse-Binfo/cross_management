@@ -168,6 +168,10 @@ table#cross_manage_crossingblock_parents_form th.cross_to,
 
   max-width: 350px;
 }
+table#cross_manage_crossingblock_parents_form  tr th.action,
+  table#cross_manage_crossingblock_parents_form  tr td.action {
+  width: 45px;
+}
 
 /* -- Form element specific tweaks */
 table#cross_manage_crossingblock_parents_form td.pnum .form-item,
@@ -188,13 +192,15 @@ table#cross_manage_crossingblock_parents_form tr.add-new td.line input {
 /* -- Add in column dividers */
 table#cross_manage_crossingblock_parents_form  tr th.header-category,
   table#cross_manage_crossingblock_parents_form  tr th.source,
-  table#cross_manage_crossingblock_parents_form  tr th.cross_to {
+  table#cross_manage_crossingblock_parents_form  tr th.cross_to,
+  table#cross_manage_crossingblock_parents_form  tr th.notes {
 
     border-right: 1px solid #4C535C;
 }
 
 table#cross_manage_crossingblock_parents_form  tr td.source,
-  table#cross_manage_crossingblock_parents_form  tr td.cross_to {
+  table#cross_manage_crossingblock_parents_form  tr td.cross_to,
+  table#cross_manage_crossingblock_parents_form  tr td.notes {
 
     border-right: 1px solid #EFEFEF;
 }
@@ -203,8 +209,8 @@ table#cross_manage_crossingblock_parents_form  tr td.pnum {
   border-left: 1px solid #314355;
 }
 
-table#cross_manage_crossingblock_parents_form  tr th.notes,
-  table#cross_manage_crossingblock_parents_form  tr td.notes {
+table#cross_manage_crossingblock_parents_form  tr th.action,
+  table#cross_manage_crossingblock_parents_form  tr td.action {
   border-right: 1px solid #314355;
 }
 
@@ -216,6 +222,26 @@ table#cross_manage_crossingblock_parents_form  tr th.notes,
 #edit-save-top {
   margin-top: 43px;
 }
+
+/* -- Action/Buttons */
+#cross_manage_crossingblock_parents_form .action {
+  text-align: center;
+}
+#cross_manage_crossingblock_parents_form .action a {
+  color: #82110F;
+}
+#cross_manage_crossingblock_parents_form .action img.remove-icon {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  display: block;
+  margin: 0 20px;
+  text-align: center;
+}
+#cross_manage_crossingblock_parents_form .action span.image-button {
+  margin-right: 9px;
+}
+
 
 /**
  * Plan Crosses: F1s Form

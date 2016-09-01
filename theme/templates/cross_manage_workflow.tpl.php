@@ -19,13 +19,17 @@
 ?>
 
 <script>
-  $(function() {
-    $( "#accordion" ).accordion({
-      collapsible: true,
-      active: <?php print $form_steps['active_panel']; ?>,
-      heightStyle: "content"
-    });
-  });
+(function ($) {
+  Drupal.behaviors.crossManageWorkflow = {
+    attach: function (context, settings) {
+      $( "#accordion" ).accordion({
+        collapsible: true,
+        active: <?php print $form_steps['active_panel']; ?>,
+        heightStyle: "content"
+      });
+    }
+  };
+})(jQuery);
 </script>
 
 <div id="accordion" class="workflow-diagram">

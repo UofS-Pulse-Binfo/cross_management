@@ -23,7 +23,7 @@ function cross_manage_crossingblock_assign_cross_num_form($form, $form_state) {
     $cb_season = $form_state['build_info']['args'][2];
 
     // Set Page Title
-    drupal_set_title(format_string('Report Crosses: @species, @season @year Crossing Block', array(
+    drupal_set_title(format_string('Register Crosses: @species, @season @year Crossing Block', array(
         '@species' => $species,
         '@year' => $cb_year,
         '@season' => $cb_season,
@@ -37,11 +37,13 @@ function cross_manage_crossingblock_assign_cross_num_form($form, $form_state) {
 
 	// Ensure the chado and cross management system are sync'd for this crossing block.
 	cross_manage_link_stocks_to_crosses($cb_year, $cb_season, $species);
-	
+
   // Get a list of the cross properties for use later.
   $property_types = cross_manage_get_cb_property_type_ids('all');
-  
-  // If this form has not yet been submitted this session, check that all the 
+  $matparent_type_id =  tripal_get_germplasm_parent_type_id('maternal');
+  $patparent_type_id =  tripal_get_germplasm_parent_type_id('paternal');
+
+  // If this form has not yet been submitted this session, check that all the
   // planned crosses are associated with their stock if it exists.
 
   // Set Breadcrumb:
@@ -50,7 +52,7 @@ function cross_manage_crossingblock_assign_cross_num_form($form, $form_state) {
   $breadcrumb[] = l('Home', '<front>');
   $breadcrumb[] = l('Crossing Block Management', 'crossing-block');
   $breadcrumb[] = l($cb_season. ' ' . $cb_year, "crossing-block/$species/$cb_year/$cb_season/summary");
-  $breadcrumb[] = l('Report Crosses', base_path() . request_uri()); // Link to current URL
+  $breadcrumb[] = l('Register Crosses', base_path() . request_uri()); // Link to current URL
   drupal_set_breadcrumb($breadcrumb);
 
   // Add Themeing:
@@ -66,14 +68,11 @@ function cross_manage_crossingblock_assign_cross_num_form($form, $form_state) {
 
   // Add Shepherd Site Tour
   //--------------------------
-  $shepherd_path = libraries_get_path('shepherd');
-  $form['#attached']['js'][] = $shepherd_path . '/shepherd.min.js';
-  $form['#attached']['js'][] = $crossmanage_path . '/theme/js/CrossManage_Parentsform_ShepherdTour.js';
-  $form['#attached']['css'][] = $shepherd_path .'/css/shepherd-theme-arrows.css';
-  $form['#attached']['css'][] = array(
-    'data' => $crossmanage_path . '/theme/css/crossmanage_shepherd_tour.css',
-    'weight' => 10
-  );
+  libraries_load('tether');
+  libraries_load('shepherd');
+  $form['#attached']['css'][] = drupal_get_path('theme','kptheme').'/css/shepherd_tour.css';
+  $form['#attached']['js'][] = drupal_get_path('theme','kptheme') . '/js/shepherdScrollingButtons.js';
+  $form['#attached']['js'][] = drupal_get_path('module', 'cross_manage') . '/theme/js/CrossManage_registerCrosses_ShepherdTour.js';
 
   // Add site tour link.
   //--------------------------
@@ -101,11 +100,17 @@ function cross_manage_crossingblock_assign_cross_num_form($form, $form_state) {
 		LEFT JOIN chado.organism org ON org.organism_id=s.organism_id
 		LEFT JOIN {cross_manage_planned_crosses} planned ON planned.cross_stock_id=s.stock_id
 		WHERE
-			year.type_id=3978 AND year.value=:year AND
-			season.type_id=3977 AND season.value=:season AND
+			year.type_id=:cbyear_type_id AND year.value=:year AND
+			season.type_id=:cbseason_type_id AND season.value=:season AND
 			org.genus=:genus AND
 			planned.cross_stock_id IS NULL',
-    array(':year' => $cb_year, ':season' => $cb_season, ':genus' => $species))->fetchField();
+    array(
+      ':year' => $cb_year,
+      ':season' => $cb_season,
+      ':genus' => $species,
+      ':cbyear_type_id' => $property_types['year'],
+      ':cbseason_type_id' => $property_types['season']
+    ))->fetchField();
 
   $form['#attached']['js'][] = libraries_get_path('d3') . '/d3.min.js';
   $form['#attached']['js'][] = $crossmanage_path . '/theme/js/CrossManage_registerCrossesProgress.js';
@@ -130,6 +135,7 @@ function cross_manage_crossingblock_assign_cross_num_form($form, $form_state) {
   );
 
 
+
   // Retrieve the most recent crosses.
   $crosses = chado_query("
     SELECT s.stock_id, s.name as cross_num, cvt.name as type_name, org.genus||' '||org.species as organism, cs.nid,
@@ -138,16 +144,16 @@ function cross_manage_crossingblock_assign_cross_num_form($form, $form_state) {
     LEFT JOIN public.chado_stock cs ON cs.stock_id=s.stock_id
     LEFT JOIN {cvterm} cvt ON cvt.cvterm_id=s.type_id
     LEFT JOIN {organism} org ON org.organism_id=s.organism_id
-    LEFT JOIN {stock_relationship} mat ON mat.object_id=s.stock_id AND mat.type_id=3632
-    LEFT JOIN {stock_relationship} pat ON pat.object_id=s.stock_id AND pat.type_id=3633
+    LEFT JOIN {stock_relationship} mat ON mat.object_id=s.stock_id AND mat.type_id=:matparent_type_id
+    LEFT JOIN {stock_relationship} pat ON pat.object_id=s.stock_id AND pat.type_id=:patparent_type_id
     WHERE
       org.genus=:cb_genus AND
       s.stock_id IN (
         SELECT year.stock_id
         FROM {stockprop} year, {stockprop} season
         WHERE
-          year.type_id=3978 AND year.value=:cb_year AND
-          season.type_id=3977 AND season.value=:cb_season AND
+          year.type_id=:cbyear_type_id AND year.value=:cb_year AND
+          season.type_id=:cbseason_type_id AND season.value=:cb_season AND
           year.stock_id=season.stock_id
       )
     ORDER BY s.name DESC
@@ -156,6 +162,10 @@ function cross_manage_crossingblock_assign_cross_num_form($form, $form_state) {
       ':cb_year' => $cb_year,
       ':cb_season' => $cb_season,
       ':cb_genus' => $species,
+      ':cbyear_type_id' => $property_types['year'],
+      ':cbseason_type_id' => $property_types['season'],
+      ':matparent_type_id' => $matparent_type_id,
+      ':patparent_type_id' => $patparent_type_id,
     )
   )->fetchAll();
 
@@ -683,7 +693,7 @@ function cross_manage_crossingblock_assign_cross_num_form_submit($form, $form_st
       if (!$exists) {
         chado_insert_record('stock_relationship', $rel);
       }
-      
+
       // Save the cross manage parent id to associate this stock with the originally
       // requested cross.
       $maternal_cb_parent_id = $parent->cb_parent_id;
@@ -716,7 +726,7 @@ function cross_manage_crossingblock_assign_cross_num_form_submit($form, $form_st
       if (!$exists) {
         chado_insert_record('stock_relationship', $rel);
       }
-      
+
       // Save the cross manage parent id to associate this stock with the originally
       // requested cross.
       $paternal_cb_parent_id = $parent->cb_parent_id;
@@ -731,7 +741,7 @@ function cross_manage_crossingblock_assign_cross_num_form_submit($form, $form_st
 			);
 			$success = drupal_write_record('cross_manage_planned_crosses', $cb_cross, array('maternal_parent_id', 'paternal_parent_id'));
 		}
-		
+
     // Add characteristics.
     foreach($form_state['values']['crosses'][0]['data'] as $key => $value) {
       if (!empty($value)) {

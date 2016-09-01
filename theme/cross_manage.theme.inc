@@ -36,6 +36,8 @@ function cross_manage_preprocess_views_view(&$vars) {
  */
 function theme_cross_manage_shepherd_start_tour_link() {
 
+  // @todo: this should point to a traditional help page
+  // or at the very least not redirect to the home page ;-).
   $textual_link = l(
       'Start Walk-through',
       '',
@@ -131,6 +133,7 @@ function theme_cross_manage_crossingblock_parents($vars) {
     'mat' => array('data' => 'Maternal Parent', 'colspan' => 3, 'style' => 'text-align:center', 'class' => 'header-category'),
     'pat' => array('data' => 'Paternal Parent', 'class' => 'header-category'),
     'notes' => array('data' => '', 'class' => 'notes'),
+    'action' => array('data' => '', 'class' => 'action'),
   );
   $header2 = array(
     'pnum' => array('data' => 'Parent Number', 'class' => 'pnum', 'header' => TRUE),
@@ -140,6 +143,7 @@ function theme_cross_manage_crossingblock_parents($vars) {
     //'marker_data' => array('data' => 'Markers', 'class' => 'marker_data', 'header' => TRUE),
     'cross_to' => array('data' => 'Cross To', 'class' => 'cross_to', 'header' => TRUE),
     'notes' => array('data' => 'Notes', 'class' => 'notes', 'header' => TRUE),
+    'action' => array('data' => '', 'class' => 'action', 'header' => TRUE),
   );
 
   $rows = array();

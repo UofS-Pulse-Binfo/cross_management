@@ -2,7 +2,7 @@
  * Add a Site Tour to the Cross Management F1's Form
  *
  * Library used: Shepherd.js
- * NOTE: Other than attaching this file & the Shpeherd.js library to the form
+ * NOTE: Other than attaching this file & the Shepherd.js library to the form
  * no other components or steps are needed.
  */
 
