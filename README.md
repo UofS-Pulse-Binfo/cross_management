@@ -1,4 +1,8 @@
-# KnowPulse Cross Management System
+# DEPRECATED: Not Complete
+
+This module was never completed due to time constraints. It is specific to Tripal 2 and thus is no longer recommended for use.
+
+### KnowPulse Cross Management System
 This module provides a number of forms and listings to aid breeders and associated staff in keeping track of the crosses to 
 make and the resulting progeny. First, the breeders specify what should be done with the progeny from the previous crossing 
 block (should it become a parent in this crossing block and if so, whom should it be crossed with? should some of the seed 
